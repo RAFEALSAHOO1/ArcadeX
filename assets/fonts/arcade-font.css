@@ -1,0 +1,115 @@
+/* ARCADE FONT CSS - PIXEL STYLE FONTS */
+/* Using system fonts with pixel-like styling */
+
+/* Arcade Font Definition */
+@font-face {
+    font-family: 'ArcadeFont';
+    src: local('Courier New'),
+         local('Courier'),
+         local('Monaco'),
+         local('Menlo'),
+         local('Consolas'),
+         monospace;
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* Pixel Font Definition */
+@font-face {
+    font-family: 'PixelFont';
+    src: local('Courier New'),
+         local('Courier'),
+         monospace;
+    font-weight: bold;
+    font-style: normal;
+}
+
+/* Apply arcade font globally */
+* {
+    font-family: 'ArcadeFont', monospace !important;
+}
+
+/* Pixel-perfect text rendering */
+.arcade-text {
+    font-family: 'PixelFont', monospace;
+    font-size: 16px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+}
+
+/* Large display text */
+.display-text {
+    font-family: 'PixelFont', monospace;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow:
+        1px 1px 0px #000000,
+        2px 2px 0px #000000,
+        3px 3px 0px #000000;
+}
+
+/* Retro glow effect for important text */
+.retro-glow {
+    text-shadow:
+        0 0 5px currentColor,
+        0 0 10px currentColor,
+        0 0 15px currentColor,
+        0 0 20px currentColor;
+}
+
+/* Pixel border effect */
+.pixel-border {
+    text-shadow:
+        -1px -1px 0px #000000,
+        1px -1px 0px #000000,
+        -1px 1px 0px #000000,
+        1px 1px 0px #000000;
+}
+
+/* LCD-style font for displays */
+.lcd-font {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+    background-size: 2px 2px;
+}
+
+/* Terminal font for system messages */
+.terminal-font {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Ensure crisp font rendering */
+html {
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeSpeed;
+}
+
+/* Pixel-perfect scaling */
+@media (-webkit-min-device-pixel-ratio: 2) {
+    .arcade-text {
+        font-size: 32px;
+        transform: scale(0.5);
+        transform-origin: top left;
+    }
+}
+
+/* Fallback for systems without good monospace fonts */
+.no-arcade-font * {
+    font-family: 'Courier New', 'Courier', monospace !important;
+    font-weight: bold !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+}</content>
+<parameter name="filePath">assets/fonts/arcade-font.css

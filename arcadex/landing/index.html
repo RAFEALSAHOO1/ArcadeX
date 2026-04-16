@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARCADE_X | SYSTEM_ACTIVE</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="crt.css">
+    <link rel="stylesheet" href="animations.css">
+    <link rel="stylesheet" href="lobby.css">
+</head>
+<body>
+    <!-- CRT OVERLAYS -->
+    <div id="scanlines"></div>
+    <div id="grain"></div>
+
+    <!-- ARCADE CABINET FRAME (LANDING SCENE) -->
+    <div id="cabinet-frame">
+        <!-- TOP PANEL -->
+        <header id="top-panel">
+            <div id="coin-slot">
+                <div id="coin-display">CREDITS: 00</div>
+                <button id="insert-coin" class="arcade-button">INSERT COIN</button>
+            </div>
+            <nav id="nav-controls">
+                <div id="nav-buttons">
+                    <button class="nav-button active">GAMES</button>
+                    <button class="nav-button">LEADERBOARD</button>
+                    <button class="nav-button">HARDWARE</button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- MAIN SCREEN -->
+        <main id="screen">
+            <!-- HERO SECTION -->
+            <section id="hero">
+                <div id="title">
+                    <h1>ARCADE<span class="blink">_</span>X</h1>
+                    <p id="subtitle">THE ULTIMATE RETRO INTERFACE</p>
+                </div>
+                <div id="hero-controls">
+                    <button id="start-button" class="arcade-button primary">START PLAYING</button>
+                    <button id="explore-button" class="arcade-button secondary">EXPLORE GAMES</button>
+                </div>
+                <div id="system-info">EST_1984_SYSTEM_READY // 0x0045FF</div>
+            </section>
+
+            <!-- GAMES GRID -->
+            <section id="games-section">
+                <div id="games-header">
+                    <h2>CLASSIC GAMES</h2>
+                    <div id="games-count">SELECT_MODULE: [04_TOTAL]</div>
+                </div>
+                <div id="games-grid">
+                    <div class="game-card" data-game="tic-tac-toe">
+                        <div class="game-title">TIC TAC TOE</div>
+                        <div class="game-type">LOGIC // STRATEGY</div>
+                    </div>
+                    <div class="game-card" data-game="snake">
+                        <div class="game-title">SNAKE</div>
+                        <div class="game-type">REFLEX // ACTION</div>
+                    </div>
+                    <div class="game-card" data-game="pong">
+                        <div class="game-title">PONG</div>
+                        <div class="game-type">ARCADE // CLASSIC</div>
+                    </div>
+                    <div class="game-card" data-game="breakout">
+                        <div class="game-title">BREAKOUT</div>
+                        <div class="game-type">PHYSICS // RETRO</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MODES SECTION -->
+            <section id="modes-section">
+                <div id="modes-content">
+                    <div id="modes-text">
+                        <div id="modes-label">SYSTEM_CAPABILITIES</div>
+                        <h2>ALL THE<br><span class="highlight">MODES</span></h2>
+                        <p>Experience the evolution of arcade gaming through multiple system configurations. From solo training to global competition.</p>
+                        <div id="mode-options">
+                            <div class="mode-option">
+                                <div class="mode-icon">></div>
+                                <div class="mode-title">SINGLE PLAYER</div>
+                                <div class="mode-desc">The classic lone wolf experience. Master the leaderboards.</div>
+                            </div>
+                            <div class="mode-option">
+                                <div class="mode-icon">></div>
+                                <div class="mode-title">VS AI</div>
+                                <div class="mode-desc">Challenge our neural-net opponent for ultimate training.</div>
+                            </div>
+                            <div class="mode-option">
+                                <div class="mode-icon">></div>
+                                <div class="mode-title">MULTIPLAYER</div>
+                                <div class="mode-desc">Real-time battles with players across the digital grid.</div>
+                            </div>
+                            <div class="mode-option">
+                                <div class="mode-icon">></div>
+                                <div class="mode-title">PLAY ANYWHERE</div>
+                                <div class="mode-desc">Responsive terminal access on any hardware module.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="modes-visual">
+                        <div id="live-feed">LIVE_FEED</div>
+                        <div id="system-code">0x334 // SYSTEM_ACTIVE</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- STATUS BAR -->
+            <section id="status-bar">
+                <div id="stats">
+                    <div class="stat">
+                        <div class="stat-value">25</div>
+                        <div class="stat-label">CLASSIC GAMES</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">NO</div>
+                        <div class="stat-label">DOWNLOAD</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">REAL</div>
+                        <div class="stat-label">ARCADE</div>
+                    </div>
+                </div>
+                <div id="credits-display">
+                    <div id="credits-led">CREDITS 00</div>
+                    <div id="credits-message">INSERT COIN TO START</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- CONTROL PANEL -->
+        <footer id="control-panel">
+            <div id="footer-info">
+                <div id="copyright">©1984 ARCADE_X TERMINAL RENDERED IN 0.003s</div>
+                <div id="footer-links">
+                    <a href="#" class="footer-link">OPERATOR_MANUAL</a>
+                    <a href="#" class="footer-link">SYSTEM_LOGS</a>
+                    <a href="#" class="footer-link">WARRANTY_VOID</a>
+                </div>
+            </div>
+            <div id="system-status">
+                <div id="status-led"></div>
+                <div id="status-text">AWAITING INPUT...</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- LOBBY SCENE (HIDDEN BY DEFAULT) -->
+    <div id="lobby-scene"></div>
+
+    <!-- GAME SCENE (HIDDEN BY DEFAULT) -->
+    <div id="game-scene"></div>
+
+    <script src="audio.js"></script>
+    <script src="lobby.js"></script>
+    <script src="../core/engine.js"></script>
+    <script src="../core/renderer.js"></script>
+    <script src="../core/input.js"></script>
+    <script src="../core/state-manager.js"></script>
+    <script src="../core/scene-manager.js"></script>
+    <script src="../core/game-scene.js"></script>
+    <script src="../games/tic-tac-toe/tic-ai.js"></script>
+    <script src="../games/tic-tac-toe/tic-ui.js"></script>
+    <script src="../games/tic-tac-toe/tic.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

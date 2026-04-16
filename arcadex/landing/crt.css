@@ -1,0 +1,467 @@
+/* CRT EFFECTS - AUTHENTIC 1980s-90s ARCADE MONITOR SIMULATION */
+/* OPTIMIZED FOR 60 FPS PERFORMANCE */
+
+/* SCANLINES OVERLAY - ENHANCED DYNAMIC */
+#scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background:
+        linear-gradient(
+            rgba(0, 0, 0, 0) 48%,
+            rgba(0, 0, 0, 0.02) 49%,
+            rgba(0, 0, 0, 0.05) 50%,
+            rgba(0, 0, 0, 0.02) 51%,
+            rgba(0, 0, 0, 0) 52%
+        ),
+        linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0) 95%,
+            rgba(0, 0, 0, 0.01) 100%
+        );
+    background-size: 100% 3px, 100% 100%;
+    z-index: 9999;
+    pointer-events: none;
+    animation:
+        scanline-move 0.12s linear infinite,
+        scanline-intensity 3s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes scanline-move {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(3px); }
+}
+
+@keyframes scanline-intensity {
+    0%, 100% { opacity: 0.6; }
+    15% { opacity: 0.8; }
+    30% { opacity: 0.4; }
+    45% { opacity: 0.9; }
+    60% { opacity: 0.5; }
+    75% { opacity: 0.7; }
+    90% { opacity: 0.3; }
+}
+
+/* GRAIN/NOISE OVERLAY - ORGANIC AND RANDOM */
+#grain {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.015) 0.5px, transparent 1px),
+        radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.008) 0.8px, transparent 1.2px),
+        radial-gradient(circle at 45% 60%, rgba(0, 255, 0, 0.004) 0.3px, transparent 0.8px),
+        radial-gradient(circle at 85% 15%, rgba(255, 0, 0, 0.003) 0.4px, transparent 0.9px),
+        radial-gradient(circle at 10% 90%, rgba(0, 0, 255, 0.002) 0.6px, transparent 1px);
+    background-size: 4px 4px, 3px 3px, 5px 5px, 2px 2px, 6px 6px;
+    z-index: 9998;
+    pointer-events: none;
+    animation:
+        grain-noise 0.8s cubic-bezier(0.4, 0, 0.6, 1) infinite,
+        grain-shift 4s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes grain-noise {
+    0%, 100% {
+        transform: translate(0, 0) rotate(0deg);
+        opacity: 0.25;
+    }
+    12% {
+        transform: translate(-0.8px, -0.6px) rotate(1deg);
+        opacity: 0.35;
+    }
+    25% {
+        transform: translate(0.6px, 0.4px) rotate(-0.5deg);
+        opacity: 0.2;
+    }
+    37% {
+        transform: translate(-0.3px, 0.7px) rotate(0.8deg);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translate(0.5px, -0.3px) rotate(-0.3deg);
+        opacity: 0.3;
+    }
+    62% {
+        transform: translate(-0.6px, 0.2px) rotate(0.6deg);
+        opacity: 0.25;
+    }
+    75% {
+        transform: translate(0.4px, 0.8px) rotate(-0.8deg);
+        opacity: 0.45;
+    }
+    87% {
+        transform: translate(-0.2px, -0.5px) rotate(0.4deg);
+        opacity: 0.2;
+    }
+}
+
+@keyframes grain-shift {
+    0%, 100% {
+        background-position: 0 0, 0 0, 0 0, 0 0, 0 0;
+    }
+    33% {
+        background-position: 2px 1px, -1px 2px, 1px -1px, 3px 0px, -2px 3px;
+    }
+    66% {
+        background-position: -1px 2px, 1px -1px, -2px 1px, 0px 2px, 1px -2px;
+    }
+}
+
+/* ENHANCED FLICKER SYSTEM - RANDOM AND REALISTIC */
+@keyframes flicker {
+    0%, 95% {
+        opacity: 1;
+        filter: brightness(1) contrast(1);
+    }
+    95.5% {
+        opacity: 0.92;
+        filter: brightness(0.88) contrast(0.95);
+    }
+    96% {
+        opacity: 1;
+        filter: brightness(1.05) contrast(1.02);
+    }
+    96.5% {
+        opacity: 0.96;
+        filter: brightness(0.94) contrast(0.98);
+    }
+    97% {
+        opacity: 1;
+        filter: brightness(1.03) contrast(1.01);
+    }
+    97.5% {
+        opacity: 0.94;
+        filter: brightness(0.91) contrast(0.96);
+    }
+    98% {
+        opacity: 1;
+        filter: brightness(1.04) contrast(1.03);
+    }
+    98.5% {
+        opacity: 0.97;
+        filter: brightness(0.95) contrast(0.99);
+    }
+    99% {
+        opacity: 1;
+        filter: brightness(1.02) contrast(1.02);
+    }
+    99.5% {
+        opacity: 0.98;
+        filter: brightness(0.97) contrast(1);
+    }
+    100% {
+        opacity: 1;
+        filter: brightness(1.01) contrast(1.01);
+    }
+}
+
+/* RANDOM FLICKER INTERVALS */
+@keyframes flicker-delayed {
+    0%, 87% {
+        animation: none;
+    }
+    87.1%, 100% {
+        animation: flicker 0.15s ease-in-out;
+    }
+}
+
+/* APPLY RANDOM FLICKER TO ENTIRE BODY */
+body {
+    animation: flicker-delayed 8s infinite;
+}
+
+/* ENHANCED BRIGHTNESS VARIATION WITH DISTORTION */
+@keyframes brightness-variation {
+    0%, 100% {
+        filter: brightness(1) hue-rotate(0deg);
+        transform: perspective(1000px) rotateX(0deg);
+    }
+    12% {
+        filter: brightness(1.03) hue-rotate(1deg);
+        transform: perspective(1000px) rotateX(0.1deg);
+    }
+    25% {
+        filter: brightness(0.97) hue-rotate(-0.5deg);
+        transform: perspective(1000px) rotateX(-0.05deg);
+    }
+    37% {
+        filter: brightness(1.02) hue-rotate(0.8deg);
+        transform: perspective(1000px) rotateX(0.08deg);
+    }
+    50% {
+        filter: brightness(0.98) hue-rotate(-0.3deg);
+        transform: perspective(1000px) rotateX(-0.03deg);
+    }
+    62% {
+        filter: brightness(1.01) hue-rotate(0.6deg);
+        transform: perspective(1000px) rotateX(0.06deg);
+    }
+    75% {
+        filter: brightness(1.04) hue-rotate(-0.8deg);
+        transform: perspective(1000px) rotateX(-0.07deg);
+    }
+    87% {
+        filter: brightness(0.96) hue-rotate(0.4deg);
+        transform: perspective(1000px) rotateX(0.04deg);
+    }
+}
+
+#cabinet-frame {
+    animation: brightness-variation 12s infinite;
+    will-change: filter, transform;
+}
+
+/* HORIZONTAL DISTORTION LINES */
+@keyframes horizontal-distortion {
+    0%, 98% {
+        transform: scaleX(1);
+        opacity: 0;
+    }
+    98.5% {
+        transform: scaleX(1.002);
+        opacity: 0.15;
+    }
+    99% {
+        transform: scaleX(0.998);
+        opacity: 0.08;
+    }
+    99.5% {
+        transform: scaleX(1.001);
+        opacity: 0.12;
+    }
+    100% {
+        transform: scaleX(1);
+        opacity: 0;
+    }
+}
+
+#screen::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 48%,
+        rgba(255, 255, 255, 0.02) 49%,
+        rgba(255, 255, 255, 0.02) 51%,
+        transparent 52%
+    );
+    z-index: 2;
+    pointer-events: none;
+    animation: horizontal-distortion 6s infinite;
+    will-change: transform, opacity;
+}
+
+/* CURVATURE ILLUSION - OPTIONAL SUBTLE EFFECT */
+#screen {
+    position: relative;
+}
+
+#screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(0, 0, 0, 0) 60%,
+        rgba(0, 0, 0, 0.1) 80%,
+        rgba(0, 0, 0, 0.2) 100%
+    );
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* CHROMATIC ABERRATION - SUBTLE RGB SEPARATION */
+@keyframes chromatic-shift {
+    0%, 100% {
+        text-shadow:
+            0 0 0 rgba(255, 0, 0, 0),
+            0 0 0 rgba(0, 255, 0, 0),
+            0 0 0 rgba(0, 0, 255, 0);
+    }
+    50% {
+        text-shadow:
+            0.5px 0 0 rgba(255, 0, 0, 0.1),
+            -0.5px 0 0 rgba(0, 255, 0, 0.1),
+            0 0.5px 0 rgba(0, 0, 255, 0.1);
+    }
+}
+
+#title h1 {
+    animation: chromatic-shift 6s infinite;
+}
+
+/* STATIC NOISE FOR EMPHASIS */
+@keyframes static-noise {
+    0%, 100% {
+        background-position: 0 0;
+    }
+    25% {
+        background-position: 10px 10px;
+    }
+    50% {
+        background-position: -5px -5px;
+    }
+    75% {
+        background-position: 5px -10px;
+    }
+}
+
+#grain {
+    animation:
+        grain-noise 0.5s steps(10) infinite,
+        static-noise 2s infinite;
+}
+
+/* SIGNAL GLITCH EFFECT - RARE BUT AUTHENTIC */
+@keyframes signal-glitch {
+    0%, 97% {
+        opacity: 0;
+        transform: translateX(0) scaleY(1);
+        filter: hue-rotate(0deg);
+    }
+    97.2% {
+        opacity: 0.3;
+        transform: translateX(-2px) scaleY(1.1);
+        filter: hue-rotate(90deg);
+    }
+    97.4% {
+        opacity: 0.6;
+        transform: translateX(1px) scaleY(0.9);
+        filter: hue-rotate(-45deg);
+    }
+    97.6% {
+        opacity: 0.4;
+        transform: translateX(-1px) scaleY(1.05);
+        filter: hue-rotate(180deg);
+    }
+    97.8% {
+        opacity: 0.2;
+        transform: translateX(0px) scaleY(0.95);
+        filter: hue-rotate(0deg);
+    }
+    98% {
+        opacity: 0;
+        transform: translateX(0) scaleY(1);
+        filter: hue-rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(0) scaleY(1);
+        filter: hue-rotate(0deg);
+    }
+}
+
+#screen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 0, 0, 0.1) 2px,
+            rgba(255, 0, 0, 0.1) 4px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 1px,
+            rgba(0, 255, 0, 0.05) 1px,
+            rgba(0, 255, 0, 0.05) 3px
+        );
+    z-index: 3;
+    pointer-events: none;
+    animation: signal-glitch 15s infinite;
+    will-change: opacity, transform, filter;
+}
+    10% {
+        opacity: 0.05;
+    }
+    20% {
+        opacity: 0;
+    }
+    30% {
+        opacity: 0.03;
+    }
+    40% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.02;
+    }
+    60% {
+        opacity: 0;
+    }
+    70% {
+        opacity: 0.04;
+    }
+    80% {
+        opacity: 0;
+    }
+    90% {
+        opacity: 0.01;
+    }
+}
+
+#scanlines::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.01) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: interference 3s infinite;
+}
+
+/* LOW RESOLUTION SIMULATION */
+@media (min-width: 1200px) {
+    #cabinet-frame {
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* REDUCE EFFECTS ON MOBILE FOR PERFORMANCE */
+@media (max-width: 768px) {
+    #grain {
+        opacity: 0.1;
+    }
+
+    #scanlines {
+        opacity: 0.3;
+    }
+
+    body {
+        animation-duration: 8s;
+    }
+
+    #cabinet-frame {
+        animation-duration: 12s;
+    }
+}</content>
+<parameter name="filePath">arcadex/landing/crt.css

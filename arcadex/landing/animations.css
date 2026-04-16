@@ -1,0 +1,345 @@
+/* ARCADE ANIMATIONS - LAGGY, STEPPED, PIXEL-BASED EFFECTS */
+
+/* ARCADE BUTTON PRESS - STEPPED ANIMATION */
+.arcade-button {
+    transition: none;
+    animation: none;
+}
+
+.arcade-button:hover {
+    animation: button-hover 0.3s steps(3);
+}
+
+.arcade-button:active {
+    animation: button-press 0.1s steps(2);
+}
+
+@keyframes button-hover {
+    0% { transform: translateY(0); }
+    33% { transform: translateY(-1px); }
+    66% { transform: translateY(-2px); }
+    100% { transform: translateY(-1px); }
+}
+
+@keyframes button-press {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(2px); }
+    100% { transform: translateY(0); }
+}
+
+/* NAV BUTTON SELECTION - PIXEL-STEPPED */
+.nav-button {
+    transition: none;
+}
+
+.nav-button:hover {
+    animation: nav-hover 0.4s steps(4);
+}
+
+@keyframes nav-hover {
+    0% { background-color: #000000; color: #ffff00; }
+    25% { background-color: #111111; color: #ffff00; }
+    50% { background-color: #ffff00; color: #000000; }
+    75% { background-color: #111111; color: #000000; }
+    100% { background-color: #ffff00; color: #000000; }
+}
+
+/* GAME CARD HOVER - ARCADE-STYLE LIFT */
+.game-card {
+    transition: none;
+}
+
+.game-card:hover {
+    animation: card-lift 0.5s steps(5);
+}
+
+@keyframes card-lift {
+    0% { transform: translateY(0); border-color: #ffff00; }
+    20% { transform: translateY(-1px); border-color: #ffff00; }
+    40% { transform: translateY(-2px); border-color: #00ff00; }
+    60% { transform: translateY(-3px); border-color: #00ff00; }
+    80% { transform: translateY(-2px); border-color: #ffff00; }
+    100% { transform: translateY(-2px); border-color: #ffff00; }
+}
+
+/* INSERT COIN BLINK - CLASSIC ARCADE */
+#insert-coin {
+    animation: coin-blink 2s infinite steps(2);
+}
+
+@keyframes coin-blink {
+    0% { opacity: 1; }
+    50% { opacity: 1; }
+    51% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+/* CREDITS DISPLAY PULSE - ARCADE STYLE */
+#credits-led {
+    animation: credits-pulse 3s infinite steps(4);
+}
+
+@keyframes credits-pulse {
+    0% { opacity: 1; }
+    25% { opacity: 1; }
+    26% { opacity: 0.7; }
+    50% { opacity: 0.7; }
+    51% { opacity: 1; }
+    75% { opacity: 1; }
+    76% { opacity: 0.8; }
+    100% { opacity: 0.8; }
+}
+
+/* SYSTEM STATUS LED - STEPPED PULSE */
+#status-led {
+    animation: led-pulse 2s infinite steps(3);
+}
+
+@keyframes led-pulse {
+    0% { opacity: 1; }
+    33% { opacity: 1; }
+    34% { opacity: 0.3; }
+    66% { opacity: 0.3; }
+    67% { opacity: 1; }
+    100% { opacity: 1; }
+}
+
+/* TITLE BLINK CURSOR - CLASSIC TERMINAL */
+.blink {
+    animation: cursor-blink 1s infinite steps(2);
+}
+
+@keyframes cursor-blink {
+    0% { opacity: 1; }
+    50% { opacity: 1; }
+    51% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+/* FOOTER LINK HOVER - PIXEL-STEPPED COLOR CHANGE */
+.footer-link {
+    transition: none;
+}
+
+.footer-link:hover {
+    animation: link-hover 0.6s steps(6);
+}
+
+@keyframes link-hover {
+    0% { color: #0000ff; }
+    16% { color: #0000ff; }
+    17% { color: #ffff00; }
+    33% { color: #ffff00; }
+    34% { color: #ff0000; }
+    50% { color: #ff0000; }
+    51% { color: #00ff00; }
+    66% { color: #00ff00; }
+    67% { color: #0000ff; }
+    83% { color: #0000ff; }
+    84% { color: #ffff00; }
+    100% { color: #ffff00; }
+}
+
+/* MODE OPTION HOVER - ARCADE SELECTION */
+.mode-option {
+    transition: none;
+}
+
+.mode-option:hover {
+    animation: mode-select 0.4s steps(4);
+}
+
+@keyframes mode-select {
+    0% { border-left-color: #00ff00; background-color: #000000; }
+    25% { border-left-color: #ffff00; background-color: #111111; }
+    50% { border-left-color: #ff0000; background-color: #000000; }
+    75% { border-left-color: #00ff00; background-color: #111111; }
+    100% { border-left-color: #00ff00; background-color: #000000; }
+}
+
+/* LOADING SEQUENCE - STARTUP ANIMATION */
+@keyframes startup-sequence {
+    0% { opacity: 0; transform: scale(0.9); }
+    10% { opacity: 0.1; transform: scale(0.91); }
+    20% { opacity: 0.2; transform: scale(0.92); }
+    30% { opacity: 0.4; transform: scale(0.94); }
+    40% { opacity: 0.6; transform: scale(0.96); }
+    50% { opacity: 0.8; transform: scale(0.98); }
+    60% { opacity: 0.9; transform: scale(0.99); }
+    70% { opacity: 1; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+#cabinet-frame {
+    animation: startup-sequence 2s steps(10);
+}
+
+/* SCREEN FLICKER ON LOAD */
+@keyframes screen-flicker {
+    0% { opacity: 1; }
+    2% { opacity: 0.9; }
+    4% { opacity: 1; }
+    6% { opacity: 0.95; }
+    8% { opacity: 1; }
+    10% { opacity: 0.98; }
+    100% { opacity: 1; }
+}
+
+#screen {
+    animation: screen-flicker 0.5s steps(10);
+}
+
+/* PIXEL PERFECT MOVEMENTS */
+@keyframes pixel-move {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(1px); }
+    100% { transform: translateX(0); }
+}
+
+/* APPLY TO INTERACTIVE ELEMENTS ON FOCUS */
+.arcade-button:focus,
+.nav-button:focus,
+.game-card:focus,
+.footer-link:focus {
+    animation: pixel-move 1s infinite steps(2);
+    outline: 2px solid #ffff00;
+    outline-offset: 1px;
+}
+
+/* DELAYED ANIMATIONS - ARCADE LAG FEEL */
+.game-card:nth-child(1) { animation-delay: 0.1s; }
+.game-card:nth-child(2) { animation-delay: 0.2s; }
+.game-card:nth-child(3) { animation-delay: 0.3s; }
+.game-card:nth-child(4) { animation-delay: 0.4s; }
+
+.mode-option:nth-child(1) { animation-delay: 0.05s; }
+.mode-option:nth-child(2) { animation-delay: 0.1s; }
+.mode-option:nth-child(3) { animation-delay: 0.15s; }
+.mode-option:nth-child(4) { animation-delay: 0.2s; }
+
+/* SLOW MOTION EFFECTS FOR RETRO FEEL */
+@keyframes slow-hover {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.game-card:hover .game-title {
+    animation: slow-hover 2s infinite steps(20);
+}
+
+/* TEXT JITTER - SUBTLE IMPERFECTIONS */
+@keyframes text-jitter {
+    0%, 96% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    96.5% {
+        transform: translate(0.3px, -0.2px) rotate(0.02deg);
+    }
+    97% {
+        transform: translate(-0.2px, 0.1px) rotate(-0.01deg);
+    }
+    97.5% {
+        transform: translate(0.1px, -0.1px) rotate(0.015deg);
+    }
+    98% {
+        transform: translate(-0.1px, 0.2px) rotate(-0.005deg);
+    }
+    98.5% {
+        transform: translate(0.2px, -0.1px) rotate(0.01deg);
+    }
+    99% {
+        transform: translate(-0.1px, 0.1px) rotate(0deg);
+    }
+    100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+}
+
+#title h1 {
+    animation: text-jitter 12s infinite;
+}
+
+/* IMPERFECT GLOW - NON-UNIFORM */
+@keyframes imperfect-glow {
+    0%, 100% {
+        text-shadow:
+            0 0 5px currentColor,
+            0 0 10px currentColor,
+            0 0 15px currentColor,
+            0 0 20px currentColor;
+    }
+    25% {
+        text-shadow:
+            0 0 3px currentColor,
+            0 0 8px currentColor,
+            0 0 12px currentColor,
+            0 0 18px currentColor;
+    }
+    50% {
+        text-shadow:
+            0 0 6px currentColor,
+            0 0 12px currentColor,
+            0 0 18px currentColor,
+            0 0 24px currentColor;
+    }
+    75% {
+        text-shadow:
+            0 0 4px currentColor,
+            0 0 9px currentColor,
+            0 0 14px currentColor,
+            0 0 19px currentColor;
+    }
+}
+
+.retro-glow {
+    animation: imperfect-glow 8s infinite;
+}
+
+/* BOOT SCREEN ANIMATIONS */
+@keyframes boot-fade {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes boot-fade-out {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.05);
+    }
+}
+
+/* REDUCE ANIMATIONS ON MOBILE FOR PERFORMANCE */
+@media (max-width: 768px) {
+    .arcade-button:hover,
+    .nav-button:hover,
+    .game-card:hover,
+    .footer-link:hover,
+    .mode-option:hover {
+        animation-duration: 0.2s;
+        animation-iteration-count: 1;
+    }
+
+    #insert-coin {
+        animation-duration: 3s;
+    }
+
+    #credits-led {
+        animation-duration: 4s;
+    }
+
+    #status-led {
+        animation-duration: 3s;
+    }
+}</content>
+<parameter name="filePath">arcadex/landing/animations.css

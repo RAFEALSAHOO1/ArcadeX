@@ -1,0 +1,215 @@
+You are a senior frontend engineer, UI/UX designer, and motion designer.
+
+Your task is to build a **production-level landing page** for a web platform called **ArcadeX**.
+
+This landing page must visually and emotionally recreate the feeling of a **1980s–1990s American arcade** — neon lights, dark rooms, glowing machines, retro-futuristic aesthetics.
+
+---
+
+# 🎯 OBJECTIVE
+
+Create a **fully responsive, high-performance landing page** that:
+
+* Works on mobile + desktop
+* Feels like entering a real retro arcade
+* Is visually immersive but lightweight
+* Is built using pure HTML, CSS, and JavaScript (no heavy frameworks)
+
+---
+
+# 🎨 DESIGN DIRECTION (STRICT)
+
+## Theme
+
+* Retro arcade (1980s–1990s American style)
+* Neon cyberpunk + vintage arcade mix
+
+---
+
+## Color Palette
+
+* Background: Deep black (#050505 or similar)
+* Neon Cyan: #00FFFF
+* Neon Pink: #FF00FF
+* Neon Purple: #9D00FF
+* Electric Blue: #00BFFF
+* Accent Yellow: #FFD700
+
+---
+
+## Visual Style Requirements
+
+* Glowing neon borders
+* Flickering light effects (subtle)
+* CRT screen feel (scanlines effect optional)
+* Arcade cabinet-inspired UI elements
+* Pixel / retro fonts (but readable)
+
+---
+
+# 🧩 PAGE STRUCTURE
+
+## 1. HERO SECTION (MOST IMPORTANT)
+
+Must include:
+
+* Large glowing title: **ARCADEX**
+* Subtitle: “Play the Classics. Anywhere. Anytime.”
+* Animated background (arcade ambience)
+
+### Effects:
+
+* Neon glow animation on title
+* Slight flicker effect
+* Background gradient animation or moving particles
+
+---
+
+## 2. CALL TO ACTION
+
+* Primary Button: “Start Playing”
+* Secondary Button: “Explore Games”
+
+### Button Style:
+
+* Neon outline
+* Glow on hover
+* Smooth scaling animation
+
+---
+
+## 3. GAME PREVIEW SECTION
+
+Display sample games as cards:
+
+* Tic Tac Toe
+* Snake
+* Pong
+* Breakout
+
+Each card:
+
+* Neon border
+* Hover animation (lift + glow)
+* Small preview (canvas or placeholder)
+
+---
+
+## 4. FEATURES SECTION
+
+Show:
+
+* 🎮 25 Classic Games
+* 🤖 Play vs AI
+* 👥 Multiplayer Mode
+* 📱 Works on All Devices
+
+Use icons + glowing text
+
+---
+
+## 5. FOOTER
+
+* Minimal
+* Dark theme
+* Links:
+
+  * Privacy Policy
+  * Terms
+  * Contact
+
+---
+
+# ✨ ANIMATIONS (MANDATORY)
+
+* Neon glow pulse
+* Hover lift effects
+* Smooth fade-in sections
+* Subtle background movement
+
+Use:
+
+* CSS animations
+* requestAnimationFrame if needed
+
+---
+
+# ⚙️ TECHNICAL REQUIREMENTS
+
+* Pure HTML, CSS, JS (NO React, NO frameworks)
+* Mobile-first responsive design
+* Optimized performance
+* Clean, modular code
+* No external heavy libraries
+
+---
+
+# 📱 RESPONSIVENESS
+
+* Must look perfect on:
+
+  * Mobile (primary)
+  * Tablet
+  * Desktop
+
+Use:
+
+* Flexbox / Grid
+* Scalable typography
+
+---
+
+# ⚡ PERFORMANCE RULES
+
+* No heavy images
+* Use gradients instead of images where possible
+* Minimal JS
+* Fast load (<2 seconds)
+
+---
+
+# 🧠 UX REQUIREMENTS
+
+* Immediate visual impact
+* Clear CTA
+* No clutter
+* Smooth navigation feel
+
+---
+
+# 📦 OUTPUT FORMAT
+
+Provide:
+
+1. Complete HTML file
+2. Complete CSS (in separate file or style block)
+3. JavaScript (if needed)
+4. Clear file structure
+
+---
+
+# ❗ IMPORTANT
+
+Do NOT make it look like a modern SaaS website.
+
+It must feel like:
+
+* Walking into a dark arcade room
+* Seeing glowing machines
+* Feeling nostalgic excitement
+
+---
+
+# 🎯 FINAL GOAL
+
+This landing page should make the user feel:
+
+“I want to play immediately.”
+
+---
+
+Build this as if it is going live to production.
+
+No placeholders. No generic UI.
+
+Make it visually unique, immersive, and memorable.
