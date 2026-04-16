@@ -14,11 +14,11 @@ class Renderer {
         // CRT effect settings
         this.crtEnabled = true;
         this.crtIntensity = 0.3;
-        this.scanlinesEnabled = true;
+        this.scanlinesEnabled = false; // Disabled for performance
         this.scanlineIntensity = 0.1;
         this.chromaticAberration = 0.0; // Disabled for performance
         this.screenCurvature = 0.0; // Disabled by default for performance
-        this.vignetteEnabled = true;
+        this.vignetteEnabled = false; // Disabled for performance
         this.vignetteIntensity = 0.2;
 
         // Pixel art settings

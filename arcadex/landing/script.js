@@ -333,6 +333,8 @@ class PerformanceMonitor {
         this.frameCount = 0;
         this.lastTime = performance.now();
         this.fps = 0;
+        this.fpsHistory = [];
+        this.lowFpsCount = 0;
         this.startMonitoring();
     }
 
@@ -342,13 +344,27 @@ class PerformanceMonitor {
             this.frameCount++;
 
             if (now - this.lastTime >= 1000) {
-                this.fps = Math.round((this.frameCount * 1000) / (now - this.lastTime));
+                const currentFps = Math.round((this.frameCount * 1000) / (now - this.lastTime));
+
+                // Smooth FPS calculation using moving average
+                this.fpsHistory.push(currentFps);
+                if (this.fpsHistory.length > 5) {
+                    this.fpsHistory.shift();
+                }
+
+                this.fps = Math.round(this.fpsHistory.reduce((a, b) => a + b) / this.fpsHistory.length);
                 this.frameCount = 0;
                 this.lastTime = now;
 
-                // Log FPS for debugging
-                if (this.fps < 50) {
-                    console.warn(`Low FPS detected: ${this.fps}`);
+                // Log FPS for debugging - warn only after consistent low FPS
+                if (this.fps < 45) {
+                    this.lowFpsCount++;
+                    if (this.lowFpsCount >= 3) { // Warn only after 3 consecutive low readings
+                        console.warn(`Low FPS detected: ${this.fps} (average over ${this.fpsHistory.length} seconds)`);
+                        this.lowFpsCount = 0; // Reset to avoid spam
+                    }
+                } else {
+                    this.lowFpsCount = 0; // Reset counter when FPS recovers
                 }
             }
 
