@@ -1,521 +1,734 @@
 // ═══════════════════════════════════════════════════════════════════
-// ARCADE X - TIC TAC TOE GAME
-// "Classic 3x3 grid strategy game with AI opponents"
+// ARCADE X - TIC TAC TOE GAME CONTROLLER
+// "Reference implementation — Orchestrates State + AI + UI + Audio"
+// Scene-compatible: init(), destroy(), update(), render(), handleInput()
 // NO FRAMEWORKS. NO LIBRARIES. PURE VANILLA JS.
 // ═══════════════════════════════════════════════════════════════════
 
 class TicTacToeGame {
-    constructor(sceneManager) {
-        this.sceneManager = sceneManager;
-        this.renderer = sceneManager.renderer;
-        this.input = sceneManager.input;
+    constructor(gameSceneManager) {
+        this.gsm = gameSceneManager;    // GameSceneManager ref (for backToLobby, audio)
+        this.audio = gameSceneManager?.audio || null;
 
-        // Game configuration
-        this.gameMode = 'single'; // 'single', 'ai-easy', 'ai-medium', 'ai-hard', 'multi'
-        this.board = Array(9).fill(null); // 3x3 grid: 0-8
-        this.currentPlayer = 'X'; // 'X' or 'O'
-        this.winner = null;
-        this.gameOver = false;
-        this.moves = 0;
+        // ── Subsystems ──
+        this.state = new TicTacToeState();
+        this.ui = new TicTacToeUI(this.state, this.audio);
 
-        // UI state
-        this.selectedCell = -1;
-        this.hoverCell = -1;
-        this.showWinnerAnimation = false;
-        this.winnerAnimationTime = 0;
+        // ── DOM ──
+        this.container = null;
 
-        // Cached rendering values
-        this.cellSize = 0;
-        this.boardSize = 0;
-        this.offsetX = 0;
-        this.offsetY = 0;
+        // ── Timing ──
+        this._aiTimer = 0;
+        this._resultDelay = 0;
 
-        // AI state
-        this.aiThinking = false;
-        this.aiMoveDelay = 500; // ms
-        this.aiMoveTimer = 0;
+        // ── Input debounce ──
+        this._lastInputTime = 0;
+        this._inputCooldown = 150; // ms
 
-        // Audio (placeholder - would integrate with audio system)
-        this.audioEnabled = true;
-
-        // Bind methods
-        this.handleInput = this.handleInput.bind(this);
-        this._makeAIMove = this._makeAIMove.bind(this);
+        // ── Bound methods ──
+        this._onCellClick = this._onCellClick.bind(this);
+        this._onBackBtn = this._onBackBtn.bind(this);
+        this._onRestartBtn = this._onRestartBtn.bind(this);
+        this._onPlayAgainBtn = this._onPlayAgainBtn.bind(this);
+        this._onChangeModeBtn = this._onChangeModeBtn.bind(this);
+        this._onBackLobbyBtn = this._onBackLobbyBtn.bind(this);
+        this._onKeyDown = this._onKeyDown.bind(this);
+        this._onMenuOptionClick = this._onMenuOptionClick.bind(this);
     }
 
-    // ── GAME INITIALIZATION ──
-    init(gameMode = 'single') {
-        // Prevent double initialization
-        if (this.input && this.input.isActive) {
-            console.log(`TIC TAC TOE already initialized, skipping`);
+    // ════════════════════════════════════════════
+    //  SCENE INTERFACE (called by SceneManager)
+    // ════════════════════════════════════════════
+
+    /**
+     * Initialize the game scene.
+     * @param {string|object} data - Game mode string or data object
+     */
+    init(data) {
+        // Get the game scene container
+        this.container = document.getElementById('game-scene');
+        if (!this.container) {
+            console.error('TicTacToe: #game-scene not found');
             return;
         }
 
-        // Handle case where init is called with scene data object
-        if (typeof gameMode === 'object' && gameMode !== null) {
-            gameMode = 'single'; // Default fallback
-        }
-        this.gameMode = gameMode;
-        this.reset();
+        // Clear default game-scene content
+        this.container.innerHTML = '';
+        this.container.style.display = 'block';
 
-        // Initialize input handling
-        this.input.enable();
+        // Mount UI
+        this.ui.mount(this.container);
 
-        console.log(`TIC TAC TOE initialized: ${this.gameMode} mode`);
-    }
+        // Wire global keyboard
+        document.addEventListener('keydown', this._onKeyDown);
 
-    reset() {
-        this.board = Array(9).fill(null);
-        this.currentPlayer = 'X';
-        this.winner = null;
-        this.gameOver = false;
-        this.moves = 0;
-        this.selectedCell = -1;
-        this.hoverCell = -1;
-        this.showWinnerAnimation = false;
-        this.winnerAnimationTime = 0;
-        this.aiThinking = false;
-        this.aiMoveTimer = 0;
-    }
-
-    // ── GAME LOGIC ──
-    makeMove(cellIndex) {
-        if (this.gameOver || this.board[cellIndex] !== null || this.aiThinking) {
-            return false;
-        }
-
-        // Make the move
-        this.board[cellIndex] = this.currentPlayer;
-        this.moves++;
-
-        // Play sound effect
-        if (this.audioEnabled) {
-            this._playMoveSound();
-        }
-
-        // Check for winner
-        this.winner = this._checkWinner();
-        if (this.winner) {
-            this.gameOver = true;
-            this.showWinnerAnimation = true;
-            if (this.audioEnabled) {
-                this._playWinSound();
-            }
-            return true;
-        }
-
-        // Check for draw
-        if (this.moves >= 9) {
-            this.gameOver = true;
-            if (this.audioEnabled) {
-                this._playDrawSound();
-            }
-            return true;
-        }
-
-        // Switch players
-        this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
-
-        // Handle AI move if applicable
-        if (this._isAIMode() && this.currentPlayer === 'O') {
-            this.aiThinking = true;
-            this.aiMoveTimer = this.aiMoveDelay;
-        }
-
-        return true;
-    }
-
-    _checkWinner() {
-        const winPatterns = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-            [0, 4, 8], [2, 4, 6] // Diagonals
-        ];
-
-        for (const pattern of winPatterns) {
-            const [a, b, c] = pattern;
-            if (this.board[a] && this.board[a] === this.board[b] && this.board[a] === this.board[c]) {
-                return {
-                    player: this.board[a],
-                    cells: pattern
-                };
-            }
-        }
-
-        return null;
-    }
-
-    _isAIMode() {
-        return this.gameMode.startsWith('ai-');
-    }
-
-    // ── AI LOGIC ──
-    _makeAIMove() {
-        if (!this.aiThinking || this.gameOver) return;
-
-        let moveIndex = -1;
-
-        switch (this.gameMode) {
-            case 'ai-easy':
-                moveIndex = this._getRandomMove();
-                break;
-            case 'ai-medium':
-                moveIndex = this._getMediumMove();
-                break;
-            case 'ai-hard':
-                moveIndex = this._getBestMove();
-                break;
-        }
-
-        if (moveIndex !== -1) {
-            this.makeMove(moveIndex);
-            this.aiThinking = false;
-        }
-    }
-
-    _getRandomMove() {
-        const availableMoves = [];
-        for (let i = 0; i < 9; i++) {
-            if (this.board[i] === null) {
-                availableMoves.push(i);
-            }
-        }
-        return availableMoves[Math.floor(Math.random() * availableMoves.length)];
-    }
-
-    _getMediumMove() {
-        // 70% chance of optimal move, 30% random
-        if (Math.random() < 0.7) {
-            return this._getBestMove();
+        // Determine if a mode was pre-selected
+        if (typeof data === 'string' && data !== 'single') {
+            // Direct mode launch (e.g. from lobby quick-launch)
+            this.state.mode = data;
+            this._startGame();
         } else {
-            return this._getRandomMove();
+            // Show mode selection menu
+            this._enterMenu();
         }
+
+        console.log('TIC TAC TOE: Scene initialized');
     }
 
-    _getBestMove() {
-        // Minimax algorithm for perfect play
-        let bestScore = -Infinity;
-        let bestMove = -1;
+    destroy() {
+        document.removeEventListener('keydown', this._onKeyDown);
+        this._unbindGameEvents();
+        this.ui.destroy();
+        this.state.destroy();
+        console.log('TIC TAC TOE: Scene destroyed');
+    }
 
-        for (let i = 0; i < 9; i++) {
-            if (this.board[i] === null) {
-                this.board[i] = 'O'; // AI is 'O'
-                const score = this._minimax(this.board, 0, false);
-                this.board[i] = null;
+    /**
+     * Called every frame by the engine
+     * @param {number} dt - delta time in seconds
+     */
+    update(dt) {
+        const s = this.state;
 
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMove = i;
-                }
+        // Handle transition timer
+        if (s.isTransitioning) {
+            s.transitionTime += dt * 1000;
+            if (s.transitionTime >= s.transitionDuration && s.transitionCallback) {
+                s.transitionCallback();
+                s.transitionCallback = null;
+            }
+            return;
+        }
+
+        // AI move timer
+        if (s.gameState === TIC_STATES.PLAYING && s.aiThinking) {
+            this._aiTimer += dt * 1000;
+            if (this._aiTimer >= s.aiMoveDelay) {
+                this._executeAIMove();
             }
         }
 
-        return bestMove;
+        // Auto-advance to result after a brief delay
+        if (s.gameState === TIC_STATES.PLAYING && (s.winner || s.isDraw)) {
+            this._resultDelay += dt * 1000;
+            if (this._resultDelay >= 1800) { // 1.8s to admire the win animation
+                this._enterResult();
+            }
+        }
+
+        // Animate cell placements
+        for (const idx in s.cellAnimations) {
+            s.cellAnimations[idx].time += dt;
+        }
+
+        // Result screen animation
+        if (s.gameState === TIC_STATES.RESULT) {
+            s.resultAnimTime += dt;
+        }
     }
 
-    _minimax(board, depth, isMaximizing) {
-        const winner = this._checkWinner();
-        if (winner) {
-            return winner.player === 'O' ? 10 - depth : depth - 10;
+    /**
+     * Called every frame for rendering (no-op since we use DOM)
+     */
+    render(dt) {
+        // DOM-based rendering — UI updates are event-driven, not per-frame
+        // Only update AI thinking visibility if in playing state
+        if (this.state.gameState === TIC_STATES.PLAYING) {
+            this.ui.showAIThinking(this.state.aiThinking);
+            this.ui._updateTurnDisplay();
         }
-        if (this.moves + depth >= 9) {
-            return 0; // Draw
-        }
+    }
 
-        if (isMaximizing) {
-            let maxEval = -Infinity;
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === null) {
-                    board[i] = 'O';
-                    const evaluation = this._minimax(board, depth + 1, false);
-                    board[i] = null;
-                    maxEval = Math.max(maxEval, evaluation);
-                }
-            }
-            return maxEval;
+    /**
+     * Called every frame for input (handled via event listeners instead)
+     */
+    handleInput(dt) {
+        // Input is handled via DOM event listeners for better responsiveness
+    }
+
+    // ════════════════════════════════════════════
+    //  GAME FLOW
+    // ════════════════════════════════════════════
+
+    _enterMenu() {
+        this.state.changeGameState(TIC_STATES.MENU);
+        this.state.menuScreen = MENU_SCREENS.MODE_SELECT;
+        this.state.menuSelectedIndex = 0;
+
+        this.ui.triggerGlitch();
+        this.ui.renderModeSelect();
+        this._bindMenuEvents();
+
+        this._playSound('navigate');
+    }
+
+    _enterDifficultySelect() {
+        this.state.menuScreen = MENU_SCREENS.DIFFICULTY_SELECT;
+        this.state.menuSelectedIndex = 1; // Default to Medium
+
+        this.ui.triggerGlitch();
+        this.ui.renderDifficultySelect();
+        this._bindMenuEvents();
+
+        this._playSound('navigate');
+    }
+
+    _startGame() {
+        this.state.resetBoard();
+        this.state.changeGameState(TIC_STATES.PLAYING);
+
+        this._aiTimer = 0;
+        this._resultDelay = 0;
+
+        this.ui.triggerGlitch();
+        this.ui.renderGameBoard();
+        this._bindGameEvents();
+
+        this._playSound('start');
+    }
+
+    _enterResult() {
+        const s = this.state;
+
+        // Update scores
+        if (s.winner) {
+            s.scores[s.winner.player]++;
         } else {
-            let minEval = Infinity;
-            for (let i = 0; i < 9; i++) {
-                if (board[i] === null) {
-                    board[i] = 'X';
-                    const evaluation = this._minimax(board, depth + 1, true);
-                    board[i] = null;
-                    minEval = Math.min(minEval, evaluation);
-                }
-            }
-            return minEval;
+            s.scores.draws++;
         }
+
+        s.changeGameState(TIC_STATES.RESULT);
+        s.menuSelectedIndex = 0;
+
+        this.ui.stopParticles();
+        this.ui.triggerGlitch();
+        this.ui.renderResult();
+        this._bindResultEvents();
+
+        this._playSound(s.winner ? 'win' : 'draw');
     }
 
-    // ── INPUT HANDLING ──
-    handleInput(deltaTime) {
-        // Mouse/touch input
-        const mousePos = this.input.getMousePosition();
+    _restartGame() {
+        this._unbindGameEvents();
+        this.ui.stopParticles();
+        this._startGame();
+    }
 
-        // Use cached rendering values (calculate if not set)
-        if (this.cellSize === 0) {
-            this.cellSize = Math.min(this.renderer.width, this.renderer.height) * 0.25;
-            this.boardSize = this.cellSize * 3;
-            this.offsetX = (this.renderer.width - this.boardSize) / 2;
-            this.offsetY = (this.renderer.height - this.boardSize) / 2;
-        }
-
-        const cellSize = this.cellSize;
-        const boardSize = this.boardSize;
-        const offsetX = this.offsetX;
-        const offsetY = this.offsetY;
-
-        // Calculate hover cell
-        this.hoverCell = -1;
-        if (mousePos.x >= offsetX && mousePos.x < offsetX + boardSize &&
-            mousePos.y >= offsetY && mousePos.y < offsetY + boardSize) {
-            const col = Math.floor((mousePos.x - offsetX) / cellSize);
-            const row = Math.floor((mousePos.y - offsetY) / cellSize);
-            this.hoverCell = row * 3 + col;
-        }
-
-        // Handle clicks - check both pressed and just clicked
-        if ((this.input.isMouseButtonPressed(0) || this.input.isMouseButtonDown(0)) && this.hoverCell !== -1) {
-            this.makeMove(this.hoverCell);
-        }
-
-        const cellSize = this.cellSize;
-        const boardSize = this.boardSize;
-        const offsetX = this.offsetX;
-        const offsetY = this.offsetY;
-
-        // Calculate hover cell
-        this.hoverCell = -1;
-        if (mousePos.x >= offsetX && mousePos.x < offsetX + boardSize &&
-            mousePos.y >= offsetY && mousePos.y < offsetY + boardSize) {
-            const col = Math.floor((mousePos.x - offsetX) / cellSize);
-            const row = Math.floor((mousePos.y - offsetY) / cellSize);
-            this.hoverCell = row * 3 + col;
-        }
-
-        // Handle clicks
-        if (this.input.isMouseButtonPressed(0) && this.hoverCell !== -1) {
-            this.makeMove(this.hoverCell);
-        }
-
-        // Keyboard navigation (for accessibility)
-        if (this.input.isRightPressed()) {
-            this.selectedCell = (this.selectedCell + 1) % 9;
-        } else if (this.input.isLeftPressed()) {
-            this.selectedCell = (this.selectedCell - 1 + 9) % 9;
-        } else if (this.input.isDownPressed()) {
-            this.selectedCell = (this.selectedCell + 3) % 9;
-        } else if (this.input.isUpPressed()) {
-            this.selectedCell = (this.selectedCell - 3 + 9) % 9;
-        }
-
-        if (this.input.isActionPressed() && this.selectedCell !== -1) {
-            this.makeMove(this.selectedCell);
-        }
-
-        // Back to lobby
-        if (this.input.isBackPressed()) {
-            // Dispatch event to return to lobby
+    _backToLobby() {
+        this._playSound('navigate');
+        if (this.gsm) {
+            this.gsm.backToLobby();
+        } else {
             const event = new CustomEvent('backToLobbyFromGame');
             document.dispatchEvent(event);
         }
     }
 
-    // ── RENDERING ──
-    update(deltaTime) {
-        // Handle AI move timer
-        if (this.aiThinking) {
-            this.aiMoveTimer -= deltaTime * 1000;
-            if (this.aiMoveTimer <= 0) {
-                this._makeAIMove();
-            }
+    // ════════════════════════════════════════════
+    //  MOVE LOGIC
+    // ════════════════════════════════════════════
+
+    _makeMove(cellIndex) {
+        const s = this.state;
+        if (s.gameState !== TIC_STATES.PLAYING) return;
+        if (s.winner || s.isDraw) return;
+        if (s.aiThinking) return;
+        if (s.board[cellIndex] !== '') return;
+
+        // Place symbol
+        const placed = s.placeSymbol(cellIndex);
+        if (!placed) return;
+
+        // Update cell in DOM
+        this.ui._updateBoardCells();
+        this._playSound('click');
+
+        // Check win
+        const winResult = s.checkWin();
+        if (winResult) {
+            s.winner = winResult;
+            this.ui._updateBoardCells(); // highlight win cells
+            this.ui.drawWinLine(winResult.cells);
+            this._resultDelay = 0;
+            return;
         }
 
-        if (this.showWinnerAnimation) {
-            this.winnerAnimationTime += deltaTime;
-            if (this.winnerAnimationTime > 2.0) { // 2 second animation
-                this.showWinnerAnimation = false;
-            }
-        }
-    }
-
-    render(deltaTime) {
-        this.renderer.beginFrame();
-
-        // Clear background
-        this.renderer.clear('#000000');
-
-        // Draw title and UI
-        this._drawUI();
-
-        // Draw game board
-        this._drawBoard();
-
-        // Draw winner animation
-        if (this.showWinnerAnimation) {
-            this._drawWinnerAnimation();
+        // Check draw
+        if (s.checkDraw()) {
+            s.isDraw = true;
+            this._resultDelay = 0;
+            return;
         }
 
-        // Draw AI thinking indicator
-        if (this.aiThinking) {
-            this._drawAIThinking();
-        }
+        // Switch turn
+        s.switchPlayer();
+        this.ui._updateTurnDisplay();
 
-        this.renderer.endFrame();
-    }
-
-    _drawUI() {
-        const centerX = this.renderer.width / 2;
-
-        // Title
-        this.renderer.drawText('TIC TAC TOE', centerX, 40, '#00ff00', 24, 'monospace', 'center');
-
-        // Current player / status
-        let statusText = '';
-        let statusColor = '#ffffff';
-
-        if (this.gameOver) {
-            if (this.winner) {
-                statusText = `PLAYER ${this.winner.player} WINS!`;
-                statusColor = this.winner.player === 'X' ? '#00ff00' : '#ff0000';
-            } else {
-                statusText = 'DRAW GAME!';
-                statusColor = '#ffff00';
-            }
-        } else if (this.aiThinking) {
-            statusText = 'AI THINKING...';
-            statusColor = '#888888';
-        } else {
-            statusText = `PLAYER ${this.currentPlayer}'S TURN`;
-            statusColor = this.currentPlayer === 'X' ? '#00ff00' : '#ff0000';
-        }
-
-        this.renderer.drawText(statusText, centerX, 80, statusColor, 16, 'monospace', 'center');
-
-        // Controls hint
-        this.renderer.drawText('CLICK TO PLAY • ESC TO EXIT', centerX, this.renderer.height - 30, '#666666', 12, 'monospace', 'center');
-    }
-
-    _drawBoard() {
-        // Use cached rendering values (assume _drawBoard was called first)
-        const cellSize = this.cellSize;
-        const boardSize = this.boardSize;
-        const offsetX = this.offsetX;
-        const offsetY = this.offsetY;
-
-        // Draw grid
-        this.renderer.drawGrid(offsetX, offsetY, boardSize, boardSize, cellSize, '#333333', 2);
-
-        // Draw arcade-style border
-        this.renderer.drawArcadeBorder(offsetX - 10, offsetY - 10, boardSize + 20, boardSize + 20, 4, '#ffff00');
-
-        // Draw cells
-        for (let row = 0; row < 3; row++) {
-            for (let col = 0; col < 3; col++) {
-                const cellIndex = row * 3 + col;
-                const x = offsetX + col * cellSize;
-                const y = offsetY + row * cellSize;
-
-                // Highlight hover/selected cell
-                if (cellIndex === this.hoverCell || cellIndex === this.selectedCell) {
-                    this.renderer.drawRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 'rgba(255, 255, 0, 0.2)', true);
-                }
-
-                // Draw X or O
-                const symbol = this.board[cellIndex];
-                if (symbol) {
-                    const color = symbol === 'X' ? '#00ff00' : '#ff0000';
-                    this._drawSymbol(symbol, x + cellSize/2, y + cellSize/2, cellSize * 0.6, color);
-                }
-            }
+        // Trigger AI if it's AI's turn
+        if (s.isAITurn()) {
+            s.aiThinking = true;
+            this._aiTimer = 0;
+            this.ui.showAIThinking(true);
         }
     }
 
-    _drawSymbol(symbol, x, y, size, color) {
-        if (symbol === 'X') {
-            const half = size / 2;
-            this.renderer.drawLine(x - half, y - half, x + half, y + half, color, 3);
-            this.renderer.drawLine(x + half, y - half, x - half, y + half, color, 3);
-        } else if (symbol === 'O') {
-            this.renderer.drawCircle(x, y, size / 2, color, false, 3);
+    _executeAIMove() {
+        const s = this.state;
+        const aiMove = TicTacToeAI.getMove([...s.board], s.mode, 'O');
+
+        s.aiThinking = false;
+        this._aiTimer = 0;
+        this.ui.showAIThinking(false);
+
+        if (aiMove >= 0) {
+            this._makeMove(aiMove);
         }
     }
 
-    _drawWinnerAnimation() {
-        if (!this.winner) return;
+    // ════════════════════════════════════════════
+    //  EVENT BINDING
+    // ════════════════════════════════════════════
 
-        const progress = Math.min(this.winnerAnimationTime / 2.0, 1);
-        const alpha = progress < 0.5 ? progress * 2 : (1 - progress) * 2;
+    _bindMenuEvents() {
+        this._unbindMenuEvents();
 
-        // Highlight winning cells
-        // Use cached values (assume _drawBoard was called first)
-        const cellSize = this.cellSize;
-        const boardSize = this.boardSize;
-        const offsetX = this.offsetX;
-        const offsetY = this.offsetY;
-
-        this.winner.cells.forEach(cellIndex => {
-            const row = Math.floor(cellIndex / 3);
-            const col = cellIndex % 3;
-            const x = offsetX + col * cellSize;
-            const y = offsetY + row * cellSize;
-
-            this.renderer.drawRect(x + 2, y + 2, cellSize - 4, cellSize - 4,
-                                 `rgba(255, 255, 0, ${alpha * 0.5})`, true);
+        // Click on menu options
+        const options = document.querySelectorAll('.tic-menu-option');
+        options.forEach(opt => {
+            opt.addEventListener('click', this._onMenuOptionClick);
         });
 
-        // Pulsing winner text
-        const centerX = this.renderer.width / 2;
-        const pulse = Math.sin(this.winnerAnimationTime * 10) * 0.3 + 0.7;
-        const winnerColor = this.winner.player === 'X' ? '#00ff00' : '#ff0000';
-        this.renderer.drawText(`★ ${this.winner.player} WINS! ★`,
-                             centerX, this.renderer.height / 2 + 100,
-                             winnerColor, 20 + pulse * 10, 'monospace', 'center');
+        // Back button
+        const backBtn = document.getElementById('tic-back-btn');
+        if (backBtn) backBtn.addEventListener('click', this._onBackBtn);
     }
 
-    _drawAIThinking() {
-        const centerX = this.renderer.width / 2;
-        const baseY = this.renderer.height / 2 + 120;
-
-        // Animated dots
-        const time = Date.now() * 0.005;
-        const dots = '...'.split('').map((dot, i) => {
-            const offset = Math.sin(time + i * 2) * 5;
-            return dot;
-        }).join('');
-
-        this.renderer.drawText(`AI THINKING${dots}`, centerX, baseY, '#888888', 14, 'monospace', 'center');
+    _unbindMenuEvents() {
+        const options = document.querySelectorAll('.tic-menu-option');
+        options.forEach(opt => {
+            opt.removeEventListener('click', this._onMenuOptionClick);
+        });
+        const backBtn = document.getElementById('tic-back-btn');
+        if (backBtn) backBtn.removeEventListener('click', this._onBackBtn);
     }
 
-    // ── AUDIO PLACEHOLDERS ──
-    _playMoveSound() {
-        // Placeholder - would play move sound
-        console.log('Move sound');
+    _bindGameEvents() {
+        this._unbindGameEvents();
+
+        // Cell clicks
+        const cells = document.querySelectorAll('.tic-cell');
+        cells.forEach(cell => {
+            cell.addEventListener('click', this._onCellClick);
+            cell.addEventListener('mouseenter', (e) => {
+                const idx = parseInt(e.currentTarget.dataset.cell);
+                this.ui.hoverCell = idx;
+                this.ui._updateBoardCells();
+            });
+            cell.addEventListener('mouseleave', () => {
+                this.ui.hoverCell = -1;
+                this.ui._updateBoardCells();
+            });
+        });
+
+        // Back button
+        const backBtn = document.getElementById('tic-back-btn');
+        if (backBtn) backBtn.addEventListener('click', this._onBackBtn);
+
+        // Restart button
+        const restartBtn = document.getElementById('tic-restart-btn');
+        if (restartBtn) restartBtn.addEventListener('click', this._onRestartBtn);
+    }
+
+    _unbindGameEvents() {
+        const cells = document.querySelectorAll('.tic-cell');
+        cells.forEach(cell => {
+            cell.removeEventListener('click', this._onCellClick);
+        });
+        const backBtn = document.getElementById('tic-back-btn');
+        if (backBtn) backBtn.removeEventListener('click', this._onBackBtn);
+        const restartBtn = document.getElementById('tic-restart-btn');
+        if (restartBtn) restartBtn.removeEventListener('click', this._onRestartBtn);
+    }
+
+    _bindResultEvents() {
+        this._unbindResultEvents();
+
+        const playAgainBtn = document.getElementById('tic-play-again-btn');
+        const changeModeBtn = document.getElementById('tic-change-mode-btn');
+        const backLobbyBtn = document.getElementById('tic-back-lobby-btn');
+        const backBtn = document.getElementById('tic-back-btn');
+
+        if (playAgainBtn) playAgainBtn.addEventListener('click', this._onPlayAgainBtn);
+        if (changeModeBtn) changeModeBtn.addEventListener('click', this._onChangeModeBtn);
+        if (backLobbyBtn) backLobbyBtn.addEventListener('click', this._onBackLobbyBtn);
+        if (backBtn) backBtn.addEventListener('click', this._onBackBtn);
+    }
+
+    _unbindResultEvents() {
+        const playAgainBtn = document.getElementById('tic-play-again-btn');
+        const changeModeBtn = document.getElementById('tic-change-mode-btn');
+        const backLobbyBtn = document.getElementById('tic-back-lobby-btn');
+
+        if (playAgainBtn) playAgainBtn.removeEventListener('click', this._onPlayAgainBtn);
+        if (changeModeBtn) changeModeBtn.removeEventListener('click', this._onChangeModeBtn);
+        if (backLobbyBtn) backLobbyBtn.removeEventListener('click', this._onBackLobbyBtn);
+    }
+
+    // ════════════════════════════════════════════
+    //  EVENT HANDLERS
+    // ════════════════════════════════════════════
+
+    _onCellClick(e) {
+        const cellIndex = parseInt(e.currentTarget.dataset.cell);
+        if (!isNaN(cellIndex)) {
+            this.state.usingKeyboard = false;
+            this._makeMove(cellIndex);
+        }
+    }
+
+    _onBackBtn() {
+        const s = this.state;
+        this._playSound('navigate');
+
+        if (s.gameState === TIC_STATES.MENU) {
+            if (s.menuScreen === MENU_SCREENS.DIFFICULTY_SELECT) {
+                // Go back to mode select
+                this._enterMenu();
+            } else {
+                // Back to lobby
+                this._backToLobby();
+            }
+        } else if (s.gameState === TIC_STATES.PLAYING) {
+            // Confirm back? For now just go to menu
+            this._enterMenu();
+        } else if (s.gameState === TIC_STATES.RESULT) {
+            this._enterMenu();
+        }
+    }
+
+    _onRestartBtn() {
+        this._playSound('navigate');
+        this._restartGame();
+    }
+
+    _onPlayAgainBtn() {
+        this._playSound('start');
+        this._restartGame();
+    }
+
+    _onChangeModeBtn() {
+        this._playSound('navigate');
+        this.ui.stopParticles();
+        this._enterMenu();
+    }
+
+    _onBackLobbyBtn() {
+        this.ui.stopParticles();
+        this._backToLobby();
+    }
+
+    _onMenuOptionClick(e) {
+        const option = e.currentTarget;
+        const index = parseInt(option.dataset.index);
+        const mode = option.dataset.mode;
+
+        this._playSound('select');
+        this.state.menuSelectedIndex = index;
+        this.ui.updateMenuSelection(index);
+
+        // Small delay for visual feedback before transitioning
+        setTimeout(() => {
+            this._selectMenuOption(mode);
+        }, 150);
+    }
+
+    // ── KEYBOARD HANDLER ──
+    _onKeyDown(e) {
+        const s = this.state;
+        const now = Date.now();
+
+        // Debounce
+        if (now - this._lastInputTime < this._inputCooldown) return;
+        this._lastInputTime = now;
+
+        switch (s.gameState) {
+            case TIC_STATES.MENU:
+                this._handleMenuKeyboard(e);
+                break;
+            case TIC_STATES.PLAYING:
+                this._handleGameKeyboard(e);
+                break;
+            case TIC_STATES.RESULT:
+                this._handleResultKeyboard(e);
+                break;
+        }
+    }
+
+    _handleMenuKeyboard(e) {
+        const s = this.state;
+        const optCount = s.menuOptions.length;
+
+        switch (e.code) {
+            case 'ArrowUp':
+            case 'KeyW':
+                e.preventDefault();
+                s.menuSelectedIndex = (s.menuSelectedIndex - 1 + optCount) % optCount;
+                this.ui.updateMenuSelection(s.menuSelectedIndex);
+                this._playSound('navigate');
+                break;
+
+            case 'ArrowDown':
+            case 'KeyS':
+                e.preventDefault();
+                s.menuSelectedIndex = (s.menuSelectedIndex + 1) % optCount;
+                this.ui.updateMenuSelection(s.menuSelectedIndex);
+                this._playSound('navigate');
+                break;
+
+            case 'Enter':
+            case 'Space':
+                e.preventDefault();
+                this._playSound('select');
+                const selectedOpt = s.menuOptions[s.menuSelectedIndex];
+                if (selectedOpt) {
+                    this._selectMenuOption(selectedOpt.id);
+                }
+                break;
+
+            case 'Escape':
+            case 'Backspace':
+                e.preventDefault();
+                this._onBackBtn();
+                break;
+        }
+    }
+
+    _handleGameKeyboard(e) {
+        const s = this.state;
+
+        switch (e.code) {
+            case 'ArrowUp':
+            case 'KeyW':
+                e.preventDefault();
+                s.usingKeyboard = true;
+                s.cursorCell = (s.cursorCell - 3 + 9) % 9;
+                this.ui._updateBoardCells();
+                this._playSound('navigate');
+                break;
+
+            case 'ArrowDown':
+            case 'KeyS':
+                e.preventDefault();
+                s.usingKeyboard = true;
+                s.cursorCell = (s.cursorCell + 3) % 9;
+                this.ui._updateBoardCells();
+                this._playSound('navigate');
+                break;
+
+            case 'ArrowLeft':
+            case 'KeyA':
+                e.preventDefault();
+                s.usingKeyboard = true;
+                s.cursorCell = (s.cursorCell - 1 + 9) % 9;
+                this.ui._updateBoardCells();
+                this._playSound('navigate');
+                break;
+
+            case 'ArrowRight':
+            case 'KeyD':
+                e.preventDefault();
+                s.usingKeyboard = true;
+                s.cursorCell = (s.cursorCell + 1) % 9;
+                this.ui._updateBoardCells();
+                this._playSound('navigate');
+                break;
+
+            case 'Enter':
+            case 'Space':
+                e.preventDefault();
+                if (s.usingKeyboard && s.cursorCell >= 0) {
+                    this._makeMove(s.cursorCell);
+                }
+                break;
+
+            case 'KeyR':
+                e.preventDefault();
+                this._restartGame();
+                break;
+
+            case 'Escape':
+            case 'Backspace':
+                e.preventDefault();
+                this._onBackBtn();
+                break;
+        }
+    }
+
+    _handleResultKeyboard(e) {
+        const s = this.state;
+        const btnCount = 3; // Play Again, Change Mode, Back to Lobby
+
+        switch (e.code) {
+            case 'ArrowUp':
+            case 'KeyW':
+                e.preventDefault();
+                s.menuSelectedIndex = (s.menuSelectedIndex - 1 + btnCount) % btnCount;
+                this._updateResultSelection();
+                this._playSound('navigate');
+                break;
+
+            case 'ArrowDown':
+            case 'KeyS':
+                e.preventDefault();
+                s.menuSelectedIndex = (s.menuSelectedIndex + 1) % btnCount;
+                this._updateResultSelection();
+                this._playSound('navigate');
+                break;
+
+            case 'Enter':
+            case 'Space':
+                e.preventDefault();
+                this._playSound('select');
+                switch (s.menuSelectedIndex) {
+                    case 0: this._onPlayAgainBtn(); break;
+                    case 1: this._onChangeModeBtn(); break;
+                    case 2: this._onBackLobbyBtn(); break;
+                }
+                break;
+
+            case 'Escape':
+            case 'Backspace':
+                e.preventDefault();
+                this._onBackBtn();
+                break;
+        }
+    }
+
+    _updateResultSelection() {
+        const buttons = document.querySelectorAll('.tic-result-btn');
+        buttons.forEach((btn, i) => {
+            btn.classList.toggle('selected', i === this.state.menuSelectedIndex);
+        });
+    }
+
+    // ════════════════════════════════════════════
+    //  MENU SELECTION LOGIC
+    // ════════════════════════════════════════════
+
+    _selectMenuOption(modeId) {
+        switch (modeId) {
+            case 'single':
+                this.state.mode = TIC_MODES.SINGLE;
+                this._startGame();
+                break;
+
+            case 'ai':
+                this._enterDifficultySelect();
+                break;
+
+            case 'multi':
+                this.state.mode = TIC_MODES.MULTI;
+                this._startGame();
+                break;
+
+            case 'ai-easy':
+                this.state.mode = TIC_MODES.AI_EASY;
+                this._startGame();
+                break;
+
+            case 'ai-medium':
+                this.state.mode = TIC_MODES.AI_MEDIUM;
+                this._startGame();
+                break;
+
+            case 'ai-hard':
+                this.state.mode = TIC_MODES.AI_HARD;
+                this._startGame();
+                break;
+        }
+    }
+
+    // ════════════════════════════════════════════
+    //  AUDIO INTEGRATION
+    // ════════════════════════════════════════════
+
+    _playSound(type) {
+        if (!this.audio) return;
+
+        switch (type) {
+            case 'click':
+                this.audio.playButtonSound();
+                break;
+            case 'navigate':
+                this.audio.playNavigateSound();
+                break;
+            case 'select':
+                this.audio.playSelectSound();
+                break;
+            case 'start':
+                this.audio.playStartSound();
+                break;
+            case 'win':
+                this._playWinSound();
+                break;
+            case 'draw':
+                this._playDrawSound();
+                break;
+        }
     }
 
     _playWinSound() {
-        // Placeholder - would play win sound
-        console.log('Win sound');
+        if (!this.audio || !this.audio.audioContext) return;
+        const ctx = this.audio.audioContext;
+        const vol = this.audio.volume;
+
+        // Ascending victory fanfare
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+            osc.type = 'square';
+            gain.gain.setValueAtTime(vol * 0.5, ctx.currentTime + i * 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
+            osc.start(ctx.currentTime + i * 0.12);
+            osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+        });
     }
 
     _playDrawSound() {
-        // Placeholder - would play draw sound
-        console.log('Draw sound');
+        if (!this.audio || !this.audio.audioContext) return;
+        const ctx = this.audio.audioContext;
+        const vol = this.audio.volume;
+
+        // Flat descending tone
+        const notes = [440, 392, 349.23]; // A4, G4, F4
+        notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
+            osc.type = 'triangle';
+            gain.gain.setValueAtTime(vol * 0.4, ctx.currentTime + i * 0.15);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.25);
+            osc.start(ctx.currentTime + i * 0.15);
+            osc.stop(ctx.currentTime + i * 0.15 + 0.25);
+        });
     }
 
-    // ── PUBLIC API ──
+    // ════════════════════════════════════════════
+    //  PUBLIC API
+    // ════════════════════════════════════════════
+
     getGameState() {
-        return {
-            board: [...this.board],
-            currentPlayer: this.currentPlayer,
-            winner: this.winner,
-            gameOver: this.gameOver,
-            moves: this.moves,
-            gameMode: this.gameMode
-        };
+        return this.state.getSnapshot();
     }
+}
 
-    destroy() {
-        this.input.disable();
-    }
+// ── EXPORT ──
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { TicTacToeGame };
 }

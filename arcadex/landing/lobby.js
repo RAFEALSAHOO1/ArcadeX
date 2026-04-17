@@ -20,7 +20,7 @@ const ARCADE_GAMES = [
         id: 'snake',
         name: 'SNAKE',
         genre: 'REFLEX // ACTION',
-        modes: ['SINGLE', 'AI'],
+        modes: ['SINGLE', 'AI', 'MULTI'],
         glowColor: 'rgba(0, 200, 255, 0.4)',
         previewColor: '#00ccff',
         previewType: 'snake'

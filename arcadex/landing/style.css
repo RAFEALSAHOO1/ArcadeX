@@ -455,6 +455,23 @@ html, body {
     text-transform: uppercase;
 }
 
+/* GAME SCENE */
+#game-scene {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    z-index: 500;
+    overflow: hidden;
+}
+
+#game-scene.active {
+    display: block;
+}
+
 /* ANIMATIONS */
 @keyframes blink {
     0%, 50% { opacity: 1; }

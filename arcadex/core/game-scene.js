@@ -1,19 +1,25 @@
 // ═══════════════════════════════════════════════════════════════════
 // ARCADE X - GAME SCENE MANAGER
 // "Handles game launching and scene transitions to games"
+// Supports both canvas-based and DOM-based games.
 // NO FRAMEWORKS. NO LIBRARIES. PURE VANILLA JS.
 // ═══════════════════════════════════════════════════════════════════
 
 class GameSceneManager {
     constructor(audio) {
         this.audio = audio;
+        this.currentGame = null;
+        this.gameId = null;
+
+        // Engine components (for canvas-based games)
         this.engine = null;
         this.renderer = null;
         this.input = null;
         this.stateManager = null;
         this.sceneManager = null;
-        this.currentGame = null;
-        this.gameCanvas = null;
+
+        // Game scene container
+        this.gameScene = null;
 
         // Bind methods
         this._handleGameEnd = this._handleGameEnd.bind(this);
@@ -21,69 +27,35 @@ class GameSceneManager {
 
     // ── INITIALIZATION ──
     init() {
-        // Create game scene container
-        const gameScene = document.getElementById('game-scene');
-        if (!gameScene) return;
-
-        gameScene.innerHTML = `
-            <div id="game-container">
-                <canvas id="game-canvas" width="800" height="600"></canvas>
-                <div id="game-ui">
-                    <button id="game-back-btn">◄ BACK TO LOBBY</button>
-                </div>
-            </div>
-        `;
-
-        // Get canvas and initialize engine
-        this.gameCanvas = document.getElementById('game-canvas');
-        if (!this.gameCanvas) return;
-
-        // Initialize core engine components
-        this.engine = new GameEngine(this.gameCanvas);
-        this.renderer = new Renderer(this.gameCanvas);
-        this.input = new InputManager(this.gameCanvas);
-        this.stateManager = new StateManager();
-        this.sceneManager = new SceneManager(this.engine, this.renderer, this.input, this.stateManager);
-
-        // Set up engine callbacks
-        this.engine.onUpdate = (deltaTime) => {
-            this.sceneManager.update(deltaTime);
-        };
-        this.engine.onRender = (deltaTime) => {
-            this.sceneManager.render(deltaTime);
-        };
-        this.engine.onInit = () => {
-            // Engine initialized
-        };
-
-        // Bind UI events
-        this._bindGameUIEvents();
+        this.gameScene = document.getElementById('game-scene');
+        if (!this.gameScene) {
+            console.error('GameSceneManager: #game-scene not found');
+            return;
+        }
 
         console.log('Game Scene Manager initialized');
     }
 
     // ── GAME LAUNCHING ──
     launchGame(game) {
-        if (!this.engine || !this.sceneManager) {
-            console.error('Game engine not initialized');
-            return false;
-        }
-
         console.log(`Launching game: ${game.name} (${game.id})`);
 
         // Stop any existing game
         this.stopCurrentGame();
 
-        // Create game instance based on game ID
         let gameInstance = null;
 
         switch (game.id) {
             case 'tic':
                 gameInstance = new TicTacToeGame(this);
-                // For Tic Tac Toe, we need to determine the mode
-                // Default to single player for now
                 gameInstance.init('single');
                 break;
+
+            case 'snake':
+                gameInstance = new SnakeGame(this);
+                gameInstance.init('single');
+                break;
+
             default:
                 console.error(`Unknown game ID: ${game.id}`);
                 return false;
@@ -94,16 +66,14 @@ class GameSceneManager {
             return false;
         }
 
-        // Add game as a scene
-        this.sceneManager.addScene(game.id, gameInstance);
-        this.sceneManager.changeScene(game.id);
         this.currentGame = gameInstance;
-
-        // Start the engine
-        this.engine.start();
+        this.gameId = game.id;
 
         // Show game scene
         this.showGameScene();
+
+        // Start the game loop for update/render
+        this._startGameLoop();
 
         // Play launch sound
         if (this.audio) {
@@ -115,26 +85,32 @@ class GameSceneManager {
 
     // ── GAME MODE SELECTION ──
     launchGameWithMode(game, mode) {
-        if (!this.engine || !this.sceneManager) {
-            console.error('Game engine not initialized');
-            return false;
-        }
-
         // Stop any existing game
         this.stopCurrentGame();
 
-        // Create game instance
         let gameInstance = null;
 
         switch (game.id) {
             case 'tic':
                 gameInstance = new TicTacToeGame(this);
-                // Map mode to game mode
-                let gameMode = 'single';
-                if (mode === 'AI') gameMode = 'ai-medium'; // Default AI difficulty
-                else if (mode === 'MULTI') gameMode = 'multi';
-                gameInstance.init(gameMode);
+                {
+                    let gameMode = 'single';
+                    if (mode === 'AI') gameMode = 'ai-medium';
+                    else if (mode === 'MULTI') gameMode = 'multi';
+                    gameInstance.init(gameMode);
+                }
                 break;
+
+            case 'snake':
+                gameInstance = new SnakeGame(this);
+                {
+                    let gameMode = 'single';
+                    if (mode === 'AI') gameMode = 'ai-medium';
+                    else if (mode === 'MULTI') gameMode = 'multi';
+                    gameInstance.init(gameMode);
+                }
+                break;
+
             default:
                 console.error(`Unknown game ID: ${game.id}`);
                 return false;
@@ -145,18 +121,46 @@ class GameSceneManager {
             return false;
         }
 
-        // Add and launch game
-        this.sceneManager.addScene(game.id, gameInstance);
-        this.sceneManager.changeScene(game.id);
         this.currentGame = gameInstance;
+        this.gameId = game.id;
 
-        // Start the engine
-        this.engine.start();
-
-        // Show game scene
         this.showGameScene();
+        this._startGameLoop();
 
         return true;
+    }
+
+    // ── GAME LOOP (for DOM-based games that need update/render ticks) ──
+    _startGameLoop() {
+        if (this._loopId) return;
+
+        let lastTime = performance.now();
+
+        const loop = (now) => {
+            if (!this.currentGame) return;
+
+            const dt = Math.min((now - lastTime) / 1000, 0.033); // cap at ~30fps delta
+            lastTime = now;
+
+            // Call game update and render
+            if (this.currentGame.update) {
+                this.currentGame.update(dt);
+            }
+            if (this.currentGame.render) {
+                this.currentGame.render(dt);
+            }
+
+            this._loopId = requestAnimationFrame(loop);
+        };
+
+        this._loopId = requestAnimationFrame(loop);
+    }
+
+    _stopGameLoop() {
+        if (this._loopId) {
+            cancelAnimationFrame(this._loopId);
+            this._loopId = null;
+        }
     }
 
     // ── SCENE MANAGEMENT ──
@@ -185,6 +189,7 @@ class GameSceneManager {
         if (gameScene) {
             gameScene.style.display = 'none';
             gameScene.classList.remove('active');
+            gameScene.innerHTML = ''; // Clean up DOM
         }
     }
 
@@ -195,45 +200,56 @@ class GameSceneManager {
         // Hide game scene
         this.hideGameScene();
 
-        // Show lobby (this will be handled by the main SceneManager)
+        // Show lobby (handled by the main AppSceneManager)
         const event = new CustomEvent('backToLobbyFromGame');
         document.dispatchEvent(event);
     }
 
     // ── GAME LIFECYCLE ──
     stopCurrentGame() {
-        if (this.engine) {
-            this.engine.stop();
-        }
+        this._stopGameLoop();
 
         if (this.currentGame) {
-            this.currentGame.destroy();
+            if (this.currentGame.destroy) {
+                this.currentGame.destroy();
+            }
             this.currentGame = null;
+            this.gameId = null;
+        }
+
+        // Clean up engine components if they were used
+        if (this.engine) {
+            this.engine.stop();
+            this.engine.destroy();
+            this.engine = null;
+        }
+
+        if (this.input) {
+            this.input.destroy();
+            this.input = null;
+        }
+
+        if (this.renderer) {
+            this.renderer.destroy();
+            this.renderer = null;
         }
 
         if (this.sceneManager) {
             this.sceneManager.clearScenes();
+            this.sceneManager = null;
         }
+
+        this.stateManager = null;
     }
 
     // ── EVENT HANDLING ──
-    _bindGameUIEvents() {
-        const backBtn = document.getElementById('game-back-btn');
-        if (backBtn) {
-            backBtn.addEventListener('click', () => {
-                this.backToLobby();
-            });
-        }
-    }
-
     _handleGameEnd(gameResult) {
-        // Handle game end (could show results screen, etc.)
         console.log('Game ended:', gameResult);
     }
 
     // ── UTILITIES ──
     isGameRunning() {
-        return this.engine && this.engine.isRunning && this.currentGame;
+        return !!this.currentGame;
     }
 
     getCurrentGame() {
@@ -243,15 +259,6 @@ class GameSceneManager {
     // ── CLEANUP ──
     destroy() {
         this.stopCurrentGame();
-
-        if (this.engine) {
-            this.engine.destroy();
-        }
-
-        if (this.input) {
-            this.input.destroy();
-        }
-
         this.hideGameScene();
     }
 }
