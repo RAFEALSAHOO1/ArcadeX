@@ -39,12 +39,18 @@ class TicTacToeGame {
         this.audioEnabled = true;
 
         // Bind methods
-        this._handleInput = this._handleInput.bind(this);
+        this.handleInput = this.handleInput.bind(this);
         this._makeAIMove = this._makeAIMove.bind(this);
     }
 
     // ── GAME INITIALIZATION ──
     init(gameMode = 'single') {
+        // Prevent double initialization
+        if (this.input && this.input.isActive) {
+            console.log(`TIC TAC TOE already initialized, skipping`);
+            return;
+        }
+
         // Handle case where init is called with scene data object
         if (typeof gameMode === 'object' && gameMode !== null) {
             gameMode = 'single'; // Default fallback
@@ -242,22 +248,43 @@ class TicTacToeGame {
     }
 
     // ── INPUT HANDLING ──
-    _handleInput(deltaTime) {
-        // Handle AI move delay
-        if (this.aiThinking) {
-            this.aiMoveTimer -= deltaTime * 1000;
-            if (this.aiMoveTimer <= 0) {
-                this._makeAIMove();
-            }
-            return;
-        }
-
+    handleInput(deltaTime) {
         // Mouse/touch input
         const mousePos = this.input.getMousePosition();
-        const cellSize = Math.min(this.renderer.width, this.renderer.height) * 0.25;
-        const boardSize = cellSize * 3;
-        const offsetX = (this.renderer.width - boardSize) / 2;
-        const offsetY = (this.renderer.height - boardSize) / 2;
+
+        // Use cached rendering values (calculate if not set)
+        if (this.cellSize === 0) {
+            this.cellSize = Math.min(this.renderer.width, this.renderer.height) * 0.25;
+            this.boardSize = this.cellSize * 3;
+            this.offsetX = (this.renderer.width - this.boardSize) / 2;
+            this.offsetY = (this.renderer.height - this.boardSize) / 2;
+        }
+
+        const cellSize = this.cellSize;
+        const boardSize = this.boardSize;
+        const offsetX = this.offsetX;
+        const offsetY = this.offsetY;
+
+        // Calculate hover cell
+        this.hoverCell = -1;
+        if (mousePos.x >= offsetX && mousePos.x < offsetX + boardSize &&
+            mousePos.y >= offsetY && mousePos.y < offsetY + boardSize) {
+            const col = Math.floor((mousePos.x - offsetX) / cellSize);
+            const row = Math.floor((mousePos.y - offsetY) / cellSize);
+            this.hoverCell = row * 3 + col;
+        }
+
+        // Handle clicks - check both pressed and just clicked
+        if ((this.input.isMouseButtonPressed(0) || this.input.isMouseButtonDown(0)) && this.hoverCell !== -1) {
+            // Debug logging
+            console.log(`Click detected at cell ${this.hoverCell}, mouse pos: ${mousePos.x}, ${mousePos.y}`);
+            this.makeMove(this.hoverCell);
+        }
+
+        const cellSize = this.cellSize;
+        const boardSize = this.boardSize;
+        const offsetX = this.offsetX;
+        const offsetY = this.offsetY;
 
         // Calculate hover cell
         this.hoverCell = -1;
@@ -315,6 +342,9 @@ class TicTacToeGame {
     }
 
     render(deltaTime) {
+        // Debug logging (remove after testing)
+        console.log('TicTacToe render called');
+
         this.renderer.beginFrame();
 
         // Clear background
@@ -372,19 +402,14 @@ class TicTacToeGame {
     }
 
     _drawBoard() {
-        // Cache rendering values (only recalculate if canvas size changed)
-        const newCellSize = Math.min(this.renderer.width, this.renderer.height) * 0.25;
-        if (this.cellSize !== newCellSize) {
-            this.cellSize = newCellSize;
-            this.boardSize = this.cellSize * 3;
-            this.offsetX = (this.renderer.width - this.boardSize) / 2;
-            this.offsetY = (this.renderer.height - this.boardSize) / 2;
-        }
-
+        // Use cached rendering values (assume _drawBoard was called first)
         const cellSize = this.cellSize;
         const boardSize = this.boardSize;
         const offsetX = this.offsetX;
         const offsetY = this.offsetY;
+
+        // Debug logging
+        console.log(`Drawing board at ${offsetX}, ${offsetY}, size ${boardSize}`);
 
         // Draw grid
         this.renderer.drawGrid(offsetX, offsetY, boardSize, boardSize, cellSize, '#333333', 2);

@@ -100,6 +100,11 @@ class GameEngine {
             this.frameTimes.shift();
         }
 
+        // Update input state
+        if (this.input) {
+            this.input.update();
+        }
+
         // Update game logic (fixed timestep)
         while (this.accumulatedTime >= this.frameInterval) {
             if (this.onUpdate) {
