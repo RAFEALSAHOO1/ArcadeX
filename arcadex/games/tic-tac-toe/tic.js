@@ -276,8 +276,6 @@ class TicTacToeGame {
 
         // Handle clicks - check both pressed and just clicked
         if ((this.input.isMouseButtonPressed(0) || this.input.isMouseButtonDown(0)) && this.hoverCell !== -1) {
-            // Debug logging
-            console.log(`Click detected at cell ${this.hoverCell}, mouse pos: ${mousePos.x}, ${mousePos.y}`);
             this.makeMove(this.hoverCell);
         }
 
@@ -342,9 +340,6 @@ class TicTacToeGame {
     }
 
     render(deltaTime) {
-        // Debug logging (remove after testing)
-        console.log('TicTacToe render called');
-
         this.renderer.beginFrame();
 
         // Clear background
@@ -407,9 +402,6 @@ class TicTacToeGame {
         const boardSize = this.boardSize;
         const offsetX = this.offsetX;
         const offsetY = this.offsetY;
-
-        // Debug logging
-        console.log(`Drawing board at ${offsetX}, ${offsetY}, size ${boardSize}`);
 
         // Draw grid
         this.renderer.drawGrid(offsetX, offsetY, boardSize, boardSize, cellSize, '#333333', 2);
