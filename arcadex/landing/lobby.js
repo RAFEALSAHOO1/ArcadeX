@@ -722,26 +722,24 @@ class AppSceneManager {
         const lobbyScene = document.getElementById('lobby-scene');
         const gameScene = document.getElementById('game-scene');
 
-        // Create static burst overlay
-        const staticEl = document.createElement('div');
-        staticEl.id = 'transition-static';
-        document.body.appendChild(staticEl);
-
         // Play transition sound
         if (this.audio) {
             this.audio.playStartSound();
         }
-
-        // Phase 1: Exit current scene
-        if (targetScene === 'lobby') {
-            landingScene.classList.add('scene-exit');
-            if (gameScene) gameScene.classList.add('scene-exit');
-        } else if (targetScene === 'game') {
-            lobbyScene.classList.add('scene-exit');
-        } else { // landing
-            lobbyScene.classList.add('scene-exit');
-            if (gameScene) gameScene.classList.add('scene-exit');
-        }
+        
+        // Use arcade intro power off transition
+        if (window.arcadeSystem && window.arcadeSystem.arcadeIntro) {
+            window.arcadeSystem.arcadeIntro.transitionPowerOff(() => {
+                // Phase 1: Exit current scene
+                if (targetScene === 'lobby') {
+                    landingScene.classList.add('scene-exit');
+                    if (gameScene) gameScene.classList.add('scene-exit');
+                } else if (targetScene === 'game') {
+                    lobbyScene.classList.add('scene-exit');
+                } else { // landing
+                    lobbyScene.classList.add('scene-exit');
+                    if (gameScene) gameScene.classList.add('scene-exit');
+                }
 
         setTimeout(() => {
             // Hide current scenes
@@ -782,20 +780,16 @@ class AppSceneManager {
                 landingScene.classList.add('scene-enter');
             }
 
-            // Cleanup
+             // Cleanup
             setTimeout(() => {
                 if (lobbyScene) lobbyScene.classList.remove('scene-enter');
                 if (landingScene) landingScene.classList.remove('scene-enter');
 
-                if (staticEl.parentNode) {
-                    staticEl.parentNode.removeChild(staticEl);
-                }
-
                 this.currentScene = targetScene;
                 this.isTransitioning = false;
             }, 800);
-
-        }, 600);
+        });
+        });
     }
 
     _handleGameSelected(game) {

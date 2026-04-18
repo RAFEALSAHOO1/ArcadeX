@@ -31,6 +31,11 @@ class GameEngine {
         // Performance monitoring
         this.frameTimes = [];
         this.maxFrameTimeHistory = 60; // 1 second at 60fps
+        
+        // FPS guard
+        this.lowFPSCount = 0;
+        this.lastWarningTime = 0;
+        this.warningCooldown = 10000; // 10s between FPS warnings
 
         // Bind methods
         this._gameLoop = this._gameLoop.bind(this);
@@ -92,6 +97,18 @@ class GameEngine {
             this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.fpsUpdateTime));
             this.frameCount = 0;
             this.fpsUpdateTime = currentTime;
+            
+            // FPS guard - warn on consistent low FPS
+            if (this.fps < 45) {
+                this.lowFPSCount++;
+                if (this.lowFPSCount >= 3 && currentTime - this.lastWarningTime > this.warningCooldown) {
+                    console.warn(`PERFORMANCE WARNING: Low FPS detected (${this.fps} FPS). Consider reducing effects.`);
+                    this.lastWarningTime = currentTime;
+                    this.lowFPSCount = 0;
+                }
+            } else {
+                this.lowFPSCount = 0;
+            }
         }
 
         // Track frame times for performance monitoring
@@ -108,14 +125,24 @@ class GameEngine {
         // Update game logic (fixed timestep)
         while (this.accumulatedTime >= this.frameInterval) {
             if (this.onUpdate) {
-                this.onUpdate(this.frameInterval / 1000); // Convert to seconds
+                try {
+                    this.onUpdate(this.frameInterval / 1000); // Convert to seconds
+                } catch (e) {
+                    console.error('Engine update error:', e);
+                    // Continue execution - don't let one bad update crash everything
+                }
             }
             this.accumulatedTime -= this.frameInterval;
         }
 
         // Render
         if (this.onRender) {
-            this.onRender(this.deltaTime / 1000); // Convert to seconds
+            try {
+                this.onRender(this.deltaTime / 1000); // Convert to seconds
+            } catch (e) {
+                console.error('Engine render error:', e);
+                // Continue execution - don't let one bad frame crash everything
+            }
         }
 
         // Continue loop

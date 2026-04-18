@@ -1,0 +1,332 @@
+/* ╔════════════════════════════════════════════════════╗
+   ║  ARCADE INTRO / BOOT / TRANSITION SYSTEM STYLES   ║
+   ║  Authentic 1980s-90s arcade machine simulation    ║
+   ║  NO SMOOTH ANIMATIONS. STEPPED. IMPERFECT.        ║
+   ╚════════════════════════════════════════════════════╝ */
+
+/* ── BOOT SCREEN ── */
+.boot-screen {
+    background: #000000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 99998;
+}
+
+.boot-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    max-width: 80%;
+}
+
+.boot-line {
+    min-height: 16px;
+    opacity: 0;
+    animation: boot-line-appear 0.1s steps(2) forwards;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+}
+
+.boot-line:nth-child(1) { animation-delay: 0.2s; }
+.boot-line:nth-child(2) { animation-delay: 0.8s; }
+.boot-line:nth-child(3) { animation-delay: 1.5s; }
+.boot-line:nth-child(4) { animation-delay: 2.2s; }
+.boot-line:nth-child(5) { 
+    animation-delay: 3.0s; 
+    color: #ffff00;
+    animation: boot-line-blink 1.5s steps(2) infinite;
+    text-shadow: 0 0 8px rgba(255, 255, 0, 0.5);
+}
+
+@keyframes boot-line-appear {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes boot-line-blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+.boot-scanline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: rgba(0, 255, 0, 0.1);
+    animation: boot-scan-sweep 3s linear forwards;
+}
+
+@keyframes boot-scan-sweep {
+    0% { top: 0; opacity: 0.5; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* ── LOADING SCREEN ── */
+.loading-screen {
+    background: #000000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 99997;
+}
+
+.loading-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    width: 80%;
+    max-width: 400px;
+}
+
+.loading-text {
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    font-size: 16px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    animation: loading-blink 0.5s steps(2) infinite;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+}
+
+.loading-bar-container {
+    width: 100%;
+    height: 12px;
+    background: #111111;
+    border: 1px solid #00ff00;
+    box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+}
+
+.loading-bar {
+    height: 100%;
+    background: #00ff00;
+    box-shadow: 0 0 12px rgba(0, 255, 0, 0.6);
+    width: 0%;
+    transition: width 0.05s steps(2);
+}
+
+.loading-status {
+    font-family: 'Courier New', monospace;
+    color: #666666;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.loading-screen.glitch .loading-bar {
+    background: #ffff00;
+    transform: translateX(2px);
+}
+
+@keyframes loading-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+/* ── SKELETON LOADING ── */
+.skeleton-loading {
+    position: absolute;
+    inset: 0;
+    background: #000000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    z-index: 100;
+}
+
+.skeleton-grid {
+    width: 200px;
+    height: 200px;
+    background: 
+        linear-gradient(90deg, rgba(0, 255, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(rgba(0, 255, 0, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+    border: 1px solid rgba(0, 255, 0, 0.2);
+    animation: skeleton-pulse 1s steps(4) infinite;
+}
+
+.skeleton-text {
+    font-family: 'Courier New', monospace;
+    color: #00ff00;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.5;
+}
+
+.skeleton-fade {
+    animation: skeleton-fade-out 0.3s steps(3) forwards;
+}
+
+@keyframes skeleton-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes skeleton-fade-out {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ── TRANSITION OVERLAY ── */
+.transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    pointer-events: none;
+}
+
+/* POWER OFF TRANSITION */
+#transition-power {
+    position: absolute;
+    inset: 0;
+    background: #000000;
+    opacity: 0;
+    transform-origin: center;
+}
+
+#transition-power.power-off {
+    animation: crt-power-off 0.25s steps(4) forwards;
+}
+
+#transition-power.power-on {
+    animation: crt-power-on 0.3s steps(4) forwards;
+}
+
+@keyframes crt-power-off {
+    0% { opacity: 0; transform: scaleY(1); }
+    33% { opacity: 0.3; transform: scaleY(0.5); }
+    66% { opacity: 0.7; transform: scaleY(0.1); }
+    100% { opacity: 1; transform: scaleY(0); }
+}
+
+@keyframes crt-power-on {
+    0% { opacity: 1; transform: scaleY(0); }
+    33% { opacity: 0.7; transform: scaleY(0.1); }
+    66% { opacity: 0.3; transform: scaleY(0.5); }
+    100% { opacity: 0; transform: scaleY(1); }
+}
+
+/* STATIC BURST TRANSITION */
+#transition-static {
+    position: absolute;
+    inset: 0;
+    background: repeating-radial-gradient(
+        circle at 20% 50%,
+        #000 0px,
+        #fff 1px,
+        #000 2px
+    );
+    background-size: 4px 4px;
+    opacity: 0;
+}
+
+#transition-static.active {
+    animation: static-burst 0.3s steps(6) forwards;
+}
+
+@keyframes static-burst {
+    0% { opacity: 0; }
+    20% { opacity: 0.8; }
+    40% { opacity: 0.6; }
+    60% { opacity: 0.9; }
+    80% { opacity: 0.4; }
+    100% { opacity: 0; }
+}
+
+/* SIGNAL GLITCH TRANSITION */
+#transition-glitch {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    opacity: 0;
+}
+
+#transition-glitch.active {
+    animation: signal-glitch 0.15s steps(3) forwards;
+}
+
+@keyframes signal-glitch {
+    0% { 
+        opacity: 1;
+        transform: translateX(-2px);
+        filter: hue-rotate(90deg);
+    }
+    33% { 
+        opacity: 0.7;
+        transform: translateX(2px);
+        filter: hue-rotate(-45deg);
+    }
+    66% { 
+        opacity: 0.5;
+        transform: translateX(-1px);
+        filter: hue-rotate(180deg);
+    }
+    100% { 
+        opacity: 0;
+        transform: translateX(0);
+        filter: hue-rotate(0deg);
+    }
+}
+
+/* ── BASE OVERLAY STYLES ── */
+.arcade-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000;
+    display: none;
+    z-index: 99990;
+}
+
+/* ── CRT ENHANCEMENTS ── */
+.crt-flicker {
+    filter: brightness(0.9) contrast(0.95);
+    transition: filter 0.05s steps(2);
+}
+
+.distortion-line {
+    position: fixed;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 99995;
+    pointer-events: none;
+    animation: distortion-line-move 0.1s steps(2) forwards;
+}
+
+@keyframes distortion-line-move {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(10px); opacity: 0; }
+}
+
+/* ── INPUT FEEDBACK ── */
+.button-press-feedback {
+    animation: button-press 0.1s steps(2) forwards;
+}
+
+@keyframes button-press {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+/* ── LOW-PERFORMANCE TWEAKS ── */
+@media (max-width: 768px) {
+    .boot-content {
+        font-size: 12px;
+    }
+    
+    .loading-text {
+        font-size: 14px;
+    }
+}

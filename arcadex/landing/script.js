@@ -7,17 +7,138 @@ class ArcadeSystem {
         this.maxCredits = 99;
         this.systemReady = false;
         this.audio = null;
+        this.engine = null;
+        this.renderer = null;
+        this.input = null;
+        this.stateManager = null;
         this.sceneManager = null;
+        this.gameSceneManager = null;
+        
+        // Debug mode - toggle to show performance overlay
+        this.DEBUG = true;
+        
         this.init();
     }
 
     init() {
-        // Initialize audio system
-        this.audio = new ArcadeAudio();
+        // Initialize central audio manager
+        this.audio = new AudioManager();
+        this.audio.init();
 
-        // Initialize scene manager
-        this.sceneManager = new AppSceneManager(this.audio);
-        this.sceneManager.init();
+        // Initialize legacy audio for backward compatibility
+        this.legacyAudio = new ArcadeAudio();
+
+        // Initialize engine systems
+        const gameSceneCanvas = document.getElementById('game-scene');
+        this.engine = new GameEngine(gameSceneCanvas);
+        this.renderer = new Renderer(gameSceneCanvas);
+        this.input = new InputSystem();
+        this.stateManager = new StateManager();
+        
+        // Initialize arcade intro/loading/transition system
+        this.arcadeIntro = new ArcadeIntroSystem(this.audio, this.engine);
+
+        // Initialize scene managers
+        this.sceneManager = new SceneManager(this.engine, this.renderer, this.input, this.stateManager);
+        
+        // Initialize game scene manager with injected systems
+        this.gameSceneManager = new GameSceneManager(
+            this.audio, 
+            this.engine, 
+            this.input,
+            this.renderer,
+            this.sceneManager,
+            this.stateManager
+        );
+        this.gameSceneManager.init();
+        
+        // Set engine callbacks to scene manager
+        this.engine.onUpdate = (dt) => {
+            this.sceneManager.update(dt);
+            
+            // Random CRT effects
+            if (this.arcadeIntro) {
+                this.arcadeIntro.triggerRandomFlicker();
+                this.arcadeIntro.triggerDistortionLine();
+            }
+        };
+        
+        this.engine.onRender = (dt) => {
+            this.sceneManager.render(dt);
+            this._renderDebugOverlay(dt);
+        };
+        
+        // Initialize scenes
+        this._initializeScenes();
+        
+        // Create debug overlay element
+        this._createDebugOverlay();
+    }
+    
+    _createDebugOverlay() {
+        // Create debug overlay container
+        const debugOverlay = document.createElement('div');
+        debugOverlay.id = 'debug-overlay';
+        debugOverlay.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            padding: 8px 12px;
+            border: 1px solid #00ff88;
+            z-index: 99999;
+            display: ${this.DEBUG ? 'block' : 'none'};
+            pointer-events: none;
+            text-shadow: 0 0 4px rgba(0, 255, 136, 0.5);
+            line-height: 1.4;
+        `;
+        debugOverlay.innerHTML = `
+            <div id="debug-fps">FPS: --</div>
+            <div id="debug-scene">SCENE: --</div>
+            <div id="debug-game">GAME: --</div>
+            <div id="debug-memory">MEM: --</div>
+        `;
+        document.body.appendChild(debugOverlay);
+    }
+    
+    _renderDebugOverlay(dt) {
+        if (!this.DEBUG) return;
+        
+        const fpsEl = document.getElementById('debug-fps');
+        const sceneEl = document.getElementById('debug-scene');
+        const gameEl = document.getElementById('debug-game');
+        const memoryEl = document.getElementById('debug-memory');
+        
+        if (fpsEl && this.engine) {
+            fpsEl.textContent = `FPS: ${this.engine.getFPS()}`;
+            if (this.engine.getFPS() < 45) {
+                fpsEl.style.color = '#ff3355';
+            } else {
+                fpsEl.style.color = '#00ff88';
+            }
+        }
+        
+        if (sceneEl && this.sceneManager) {
+            const sceneName = this.sceneManager.getCurrentSceneName() || 'none';
+            sceneEl.textContent = `SCENE: ${sceneName.toUpperCase()}`;
+        }
+        
+        if (gameEl && this.gameSceneManager) {
+            const gameId = this.gameSceneManager.gameId || 'none';
+            gameEl.textContent = `GAME: ${gameId.toUpperCase()}`;
+        }
+        
+        if (memoryEl && performance.memory) {
+            const mbUsed = Math.round(performance.memory.usedJSHeapSize / 1048576);
+            memoryEl.textContent = `MEM: ${mbUsed}MB`;
+        }
+    }
+
+        // Initialize scenes
+        this._initializeScenes();
 
         // Start boot sequence
         this.bootSequence();
@@ -30,13 +151,259 @@ class ArcadeSystem {
         }, 5000); // 5 second boot delay
     }
 
+    _initializeScenes() {
+        // Import scene classes
+        const LandingScene = window.LandingScene || class LandingScene extends Scene {
+            constructor(audio) {
+                super();
+                this.name = 'landing';
+                this.audio = audio;
+            }
+            
+            init() {
+                // Landing page is already in DOM, just show it
+                const landingEl = document.getElementById('cabinet-frame');
+                if (landingEl) landingEl.style.display = 'block';
+            }
+            
+            update(dt) {
+                // No update needed for landing page
+            }
+            
+            render(dt) {
+                // No render needed for landing page
+            }
+            
+            handleInput(input) {
+                // Handle input for landing page
+                if (input.isKeyJustPressed('Space') || input.isKeyJustPressed('Enter')) {
+                    this.insertCoin();
+                }
+                
+                // Number keys for game selection (1-4)
+                if (input.isKeyJustPressed('Key1') || 
+                    input.isKeyJustPressed('Key2') || 
+                    input.isKeyJustPressed('Key3') || 
+                    input.isKeyJustPressed('Key4')) {
+                    this.enterLobby();
+                }
+                
+                // S key to start game / enter lobby
+                if (input.isKeyJustPressed('KeyS') && this.credits > 0) {
+                    this.enterLobby();
+                }
+            }
+            
+            destroy() {
+                // Hide landing page
+                const landingEl = document.getElementById('cabinet-frame');
+                if (landingEl) landingEl.style.display = 'none';
+            }
+            
+            insertCoin() {
+                if (this.credits < this.maxCredits) {
+                    this.credits++;
+                    this.updateCreditsDisplay();
+                    this.playCoinSound();
+                    this.showCoinMessage();
+                }
+            }
+            
+            enterLobby() {
+                if (this.systemReady && this.credits > 0) {
+                    this.credits--;
+                    this.updateCreditsDisplay();
+                    this.sceneManager.changeScene('lobby');
+                }
+            }
+            
+            updateCreditsDisplay() {
+                const creditsLed = document.getElementById('credits-led');
+                const coinDisplay = document.getElementById('coin-display');
+                const lobbyCreditCount = document.getElementById('lobby-credit-count');
+
+                const formatted = this.credits.toString().padStart(2, '0');
+
+                if (creditsLed) {
+                    creditsLed.textContent = `CREDITS ${formatted}`;
+                }
+
+                if (coinDisplay) {
+                    coinDisplay.textContent = `CREDITS: ${formatted}`;
+                }
+
+                if (lobbyCreditCount) {
+                    lobbyCreditCount.textContent = formatted;
+                }
+            }
+            
+            playCoinSound() {
+                if (this.audio) {
+                    this.audio.playCoinSound();
+                }
+            }
+            
+            showCoinMessage() {
+                this.showMessage('COIN INSERTED', 1000);
+            }
+            
+            showMessage(text, duration = 2000) {
+                // Remove any existing message
+                const existing = document.getElementById('arcade-message');
+                if (existing) existing.remove();
+
+                // Create temporary message overlay
+                const message = document.createElement('div');
+                message.id = 'arcade-message';
+                message.textContent = text;
+                message.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background-color: #000000;
+                    color: #ffff00;
+                    border: 2px solid #ffff00;
+                    padding: 20px 40px;
+                    font-size: 18px;
+                    font-family: 'ArcadeFont', monospace;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    z-index: 10000;
+                    animation: message-appear 0.3s steps(3);
+                `;
+
+                document.body.appendChild(message);
+
+                setTimeout(() => {
+                    message.style.animation = 'message-disappear 0.3s steps(3)';
+                    setTimeout(() => {
+                        if (message.parentNode) {
+                            message.parentNode.removeChild(message);
+                        }
+                    }, 300);
+                }, duration);
+            }
+        };
+        
+        const LobbyScene = window.LobbyScene || class LobbyScene extends Scene {
+            constructor(audio) {
+                super();
+                this.name = 'lobby';
+                this.audio = audio;
+                this.lobby = null;
+            }
+            
+            init() {
+                // Initialize lobby system
+                this.lobby = new ArcadeLobby(this.audio);
+                this.lobby.buildLobby();
+                
+                // Listen for lobby events
+                document.addEventListener('lobbyBack', () => {
+                    this.sceneManager.changeScene('landing');
+                });
+                
+                document.addEventListener('gameSelected', (e) => {
+                    this._handleGameSelected(e.detail.game);
+                });
+            }
+            
+            update(dt) {
+                if (this.lobby) {
+                    this.lobby.update(dt);
+                }
+            }
+            
+            render(dt) {
+                if (this.lobby) {
+                    this.lobby.render(dt);
+                }
+            }
+            
+            handleInput(input) {
+                if (this.lobby) {
+                    this.lobby.handleInput(input);
+                }
+            }
+            
+            destroy() {
+                if (this.lobby) {
+                    this.lobby.destroy();
+                    this.lobby = null;
+                }
+                
+                // Remove event listeners
+                document.removeEventListener('lobbyBack', () => {
+                    this.sceneManager.changeScene('landing');
+                });
+                
+                document.removeEventListener('gameSelected', (e) => {
+                    this._handleGameSelected(e.detail.game);
+                });
+            }
+            
+            _handleGameSelected(game) {
+                // Launch the game through gameSceneManager
+                // We'll need to access the gameSceneManager from the arcade system
+                // For now, we'll use a custom event that the original AppSceneManager listens to
+                const event = new CustomEvent('gameSelected', { detail: { game } });
+                document.dispatchEvent(event);
+            }
+        };
+        
+        const GameScene = window.GameScene || class GameScene extends Scene {
+            constructor(audio, gameSceneManager) {
+                super();
+                this.name = 'game';
+                this.audio = audio;
+                this.gameSceneManager = gameSceneManager;
+            }
+            
+            init(data) {
+                if (data && data.game) {
+                    this.gameSceneManager.launchGame(data.game);
+                }
+            }
+            
+            update(dt) {
+                // Game scene updates are handled by the engine through gameSceneManager
+            }
+            
+            render(dt) {
+                // Game scene rendering is handled by the engine through gameSceneManager
+            }
+            
+            handleInput(input) {
+                // Game scene input is handled by the engine through gameSceneManager
+            }
+            
+            destroy() {
+                // Clean up any game resources
+                this.gameSceneManager.stopCurrentGame();
+            }
+        };
+
+        // Register scenes with the scene manager
+        this.sceneManager.addScene('landing', new LandingScene(this.audio));
+        this.sceneManager.addScene('lobby', new LobbyScene(this.audio));
+        this.sceneManager.addScene('game', new GameScene(this.audio, this.gameSceneManager));
+        
+        // Start with landing scene
+        this.sceneManager.changeScene('landing');
+    }
+
     bindEvents() {
         // INSERT COIN button
         const insertCoinBtn = document.getElementById('insert-coin');
         if (insertCoinBtn) {
             insertCoinBtn.addEventListener('click', () => {
-                this.playButtonSound();
-                this.insertCoin();
+                this.arcadeIntro.inputDelay(() => {
+                    insertCoinBtn.classList.add('button-press-feedback');
+                    setTimeout(() => insertCoinBtn.classList.remove('button-press-feedback'), 100);
+                    this.playButtonSound();
+                    this.insertCoin();
+                });
             });
         }
 
@@ -44,8 +411,14 @@ class ArcadeSystem {
         const startBtn = document.getElementById('start-button');
         if (startBtn) {
             startBtn.addEventListener('click', () => {
-                this.playButtonSound();
-                setTimeout(() => this.enterLobby(), 100);
+                this.arcadeIntro.inputDelay(() => {
+                    startBtn.classList.add('button-press-feedback');
+                    setTimeout(() => startBtn.classList.remove('button-press-feedback'), 100);
+                    this.playButtonSound();
+                    this.arcadeIntro.transitionStaticBurst(() => {
+                        this.enterLobby();
+                    });
+                });
             });
         }
 
@@ -221,84 +594,18 @@ class ArcadeSystem {
     bootSequence() {
         // Disable all interactions during boot
         document.body.style.pointerEvents = 'none';
-
-        // Boot sequence messages
-        setTimeout(() => {
-            this.showBootMessage('ARCADE_X v3.1');
-            if (this.audio) this.audio.playButtonSound();
-        }, 500);
-
-        setTimeout(() => {
-            this.showBootMessage('INITIALIZING HARDWARE...');
-            if (this.audio) this.audio.playSelectSound();
-        }, 1200);
-
-        setTimeout(() => {
-            this.showBootMessage('CALIBRATING DISPLAY...');
-            if (this.audio) this.audio.playButtonSound();
-        }, 2200);
-
-        setTimeout(() => {
-            this.showBootMessage('LOADING GAME MODULES...');
-            if (this.audio) this.audio.playSelectSound();
-        }, 3200);
-
-        setTimeout(() => {
-            this.showBootMessage('SYSTEM READY');
-            if (this.audio) this.audio.playStartSound();
-        }, 4200);
-
-        // Re-enable interactions
-        setTimeout(() => {
+        
+        // Run proper arcade boot sequence
+        this.arcadeIntro.boot(() => {
+            // Boot complete
             document.body.style.pointerEvents = 'auto';
             this.showMessage('INSERT COIN', 3000);
-        }, 5000);
+        });
     }
 
     showBootMessage(text) {
-        // Create boot screen overlay
-        const bootScreen = document.createElement('div');
-        bootScreen.id = 'boot-screen';
-        bootScreen.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000000;
-            color: #00ff00;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            z-index: 10000;
-            animation: boot-fade 0.5s ease-in;
-        `;
-
-        bootScreen.textContent = text;
-
-        // Remove previous boot screen
-        const existingBoot = document.getElementById('boot-screen');
-        if (existingBoot) {
-            existingBoot.remove();
-        }
-
-        document.body.appendChild(bootScreen);
-
-        // Remove after 1 second
-        setTimeout(() => {
-            if (bootScreen.parentNode) {
-                bootScreen.style.animation = 'boot-fade-out 0.5s ease-out';
-                setTimeout(() => {
-                    if (bootScreen.parentNode) {
-                        bootScreen.parentNode.removeChild(bootScreen);
-                    }
-                }, 500);
-            }
-        }, 1000);
+        // NOTE: Boot sequence now handled by ArcadeIntroSystem.boot()
+        console.log(`BOOT: ${text}`);
     }
 }
 
@@ -384,6 +691,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.arcadeSystem = new ArcadeSystem();
     new PerformanceMonitor();
 });
+
+// Make arcade intro globally accessible
+window.ArcadeIntroSystem = ArcadeIntroSystem;
 
 // Enhanced performance monitoring
 window.addEventListener('load', () => {

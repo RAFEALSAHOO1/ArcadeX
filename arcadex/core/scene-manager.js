@@ -109,14 +109,24 @@ class SceneManager {
     // ── UPDATE AND RENDER ──
     update(deltaTime) {
         if (this.currentScene) {
-            this.currentScene.handleInput(deltaTime);
-            this.currentScene.update(deltaTime);
+            try {
+                this.currentScene.handleInput(this.input, deltaTime);
+                this.currentScene.update(deltaTime);
+            } catch (e) {
+                console.error(`Scene ${this.getCurrentSceneName()} update error:`, e);
+                // Continue execution
+            }
         }
     }
 
     render(deltaTime) {
         if (this.currentScene) {
-            this.currentScene.render(deltaTime);
+            try {
+                this.currentScene.render(deltaTime);
+            } catch (e) {
+                console.error(`Scene ${this.getCurrentSceneName()} render error:`, e);
+                // Continue execution
+            }
         }
     }
 

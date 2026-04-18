@@ -5,10 +5,9 @@
 // NO FRAMEWORKS. NO LIBRARIES. PURE VANILLA JS.
 // ═══════════════════════════════════════════════════════════════════
 
-class TicTacToeGame {
+class TicTacToeGame extends BaseGame {
     constructor(gameSceneManager) {
-        this.gsm = gameSceneManager;    // GameSceneManager ref (for backToLobby, audio)
-        this.audio = gameSceneManager?.audio || null;
+        super(gameSceneManager);
 
         // ── Subsystems ──
         this.state = new TicTacToeState();
@@ -144,6 +143,10 @@ class TicTacToeGame {
      */
     handleInput(dt) {
         // Input is handled via DOM event listeners for better responsiveness
+    }
+    
+    getRenderMode() {
+        return "dom";
     }
 
     // ════════════════════════════════════════════
@@ -654,27 +657,18 @@ class TicTacToeGame {
 
     _playSound(type) {
         if (!this.audio) return;
-
+        // Use central AudioManager
         switch (type) {
-            case 'click':
-                this.audio.playButtonSound();
-                break;
-            case 'navigate':
-                this.audio.playNavigateSound();
-                break;
-            case 'select':
-                this.audio.playSelectSound();
-                break;
-            case 'start':
-                this.audio.playStartSound();
-                break;
-            case 'win':
-                this._playWinSound();
-                break;
-            case 'draw':
-                this._playDrawSound();
-                break;
+            case 'navigate': this.audio.play('navigate'); break;
+            case 'select':   this.audio.play('select');   break;
+            case 'start':    this.audio.play('start');    break;
+            case 'click':    this.audio.play('click');    break;
+            case 'win':      this.audio.play('win');      break;
+            case 'lose':     this.audio.play('lose');     break;
+            case 'draw':     this.audio.play('lose');     break;
+            case 'place':    this.audio.play('move');     break;
         }
+    }
     }
 
     _playWinSound() {
@@ -726,7 +720,9 @@ class TicTacToeGame {
     getGameState() {
         return this.state.getSnapshot();
     }
-}
+
+// Make globally available
+window.TicTacToeGame = TicTacToeGame;
 
 // ── EXPORT ──
 if (typeof module !== 'undefined' && module.exports) {

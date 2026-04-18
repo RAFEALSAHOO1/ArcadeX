@@ -282,6 +282,12 @@ body {
     );
     z-index: 1;
     pointer-events: none;
+    animation: vignette-breathe 6s infinite;
+}
+
+@keyframes vignette-breathe {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 0.35; }
 }
 
 /* CHROMATIC ABERRATION - SUBTLE RGB SEPARATION */

@@ -5,10 +5,9 @@
 // NO FRAMEWORKS. NO LIBRARIES. PURE VANILLA JS.
 // ═══════════════════════════════════════════════════════════════════
 
-class SnakeGame {
+class SnakeGame extends BaseGame {
     constructor(gameSceneManager) {
-        this.gsm = gameSceneManager;
-        this.audio = gameSceneManager?.audio || null;
+        super(gameSceneManager);
 
         // ── Subsystems ──
         this.state = new SnakeState();
@@ -152,6 +151,10 @@ class SnakeGame {
     }
 
     handleInput(dt) { /* handled via event listeners */ }
+    
+    getRenderMode() {
+        return "canvas";
+    }
 
     // ════════════════════════════════════════════
     //  GAME FLOW
@@ -514,67 +517,19 @@ class SnakeGame {
 
     _playSound(type) {
         if (!this.audio) return;
+        // Use central AudioManager
         switch (type) {
-            case 'navigate': this.audio.playNavigateSound(); break;
-            case 'select':   this.audio.playSelectSound();   break;
-            case 'start':    this.audio.playStartSound();    break;
-            case 'eat':      this._playSfx_eat();            break;
-            case 'death':    this._playSfx_death();          break;
-            case 'win':      this._playSfx_win();            break;
-            case 'gameOver': this._playSfx_death();          break;
+            case 'navigate': this.audio.play('navigate'); break;
+            case 'select':   this.audio.play('select');   break;
+            case 'start':    this.audio.play('start');    break;
+            case 'eat':      this.audio.play('move');     break;
+            case 'death':    this.audio.play('lose');     break;
+            case 'win':      this.audio.play('win');      break;
+            case 'gameOver': this.audio.play('lose');     break;
         }
     }
 
-    _playSfx_eat() {
-        if (!this.audio?.audioContext) return;
-        const ctx = this.audio.audioContext;
-        const v = this.audio.volume;
-        // Quick ascending blip
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.type = 'square';
-        o.frequency.setValueAtTime(440, ctx.currentTime);
-        o.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
-        g.gain.setValueAtTime(v * 0.6, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
-        o.start(); o.stop(ctx.currentTime + 0.12);
-    }
 
-    _playSfx_death() {
-        if (!this.audio?.audioContext) return;
-        const ctx = this.audio.audioContext;
-        const v = this.audio.volume;
-        // Descending crash
-        [220, 180, 130].forEach((f, i) => {
-            const o = ctx.createOscillator();
-            const g = ctx.createGain();
-            o.connect(g); g.connect(ctx.destination);
-            o.type = 'sawtooth';
-            o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.1);
-            g.gain.setValueAtTime(v * 0.5, ctx.currentTime + i * 0.1);
-            g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.1 + 0.2);
-            o.start(ctx.currentTime + i * 0.1);
-            o.stop(ctx.currentTime + i * 0.1 + 0.2);
-        });
-    }
-
-    _playSfx_win() {
-        if (!this.audio?.audioContext) return;
-        const ctx = this.audio.audioContext;
-        const v = this.audio.volume;
-        [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
-            const o = ctx.createOscillator();
-            const g = ctx.createGain();
-            o.connect(g); g.connect(ctx.destination);
-            o.type = 'square';
-            o.frequency.setValueAtTime(f, ctx.currentTime + i * 0.12);
-            g.gain.setValueAtTime(v * 0.5, ctx.currentTime + i * 0.12);
-            g.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
-            o.start(ctx.currentTime + i * 0.12);
-            o.stop(ctx.currentTime + i * 0.12 + 0.3);
-        });
-    }
 
     // ════════════════════════════════════════════
     //  PUBLIC API
@@ -582,6 +537,9 @@ class SnakeGame {
 
     getGameState() { return this.state.getSnapshot(); }
 }
+
+// Make globally available
+window.SnakeGame = SnakeGame;
 
 // ── EXPORT ──
 if (typeof module !== 'undefined' && module.exports) {
