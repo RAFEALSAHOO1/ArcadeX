@@ -780,7 +780,7 @@ class AppSceneManager {
                 landingScene.classList.add('scene-enter');
             }
 
-             // Cleanup
+            // Cleanup
             setTimeout(() => {
                 if (lobbyScene) lobbyScene.classList.remove('scene-enter');
                 if (landingScene) landingScene.classList.remove('scene-enter');
@@ -788,7 +788,6 @@ class AppSceneManager {
                 this.currentScene = targetScene;
                 this.isTransitioning = false;
             }, 800);
-        });
         });
     }
 

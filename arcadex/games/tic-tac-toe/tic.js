@@ -669,7 +669,6 @@ class TicTacToeGame extends BaseGame {
             case 'place':    this.audio.play('move');     break;
         }
     }
-    }
 
     _playWinSound() {
         if (!this.audio || !this.audio.audioContext) return;
