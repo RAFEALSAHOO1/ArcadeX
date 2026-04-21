@@ -28,18 +28,21 @@ class SnakeGame extends BaseGame {
         this._touchStartX = 0;
         this._touchStartY = 0;
 
-        // ── Bound methods ──
-        this._onKeyDown       = this._onKeyDown.bind(this);
-        this._onBackBtn       = this._onBackBtn.bind(this);
-        this._onRestartBtn    = this._onRestartBtn.bind(this);
-        this._onPauseBtn      = this._onPauseBtn.bind(this);
-        this._onPlayAgainBtn  = this._onPlayAgainBtn.bind(this);
-        this._onChangeModeBtn = this._onChangeModeBtn.bind(this);
-        this._onBackLobbyBtn  = this._onBackLobbyBtn.bind(this);
-        this._onMenuOptionClick = this._onMenuOptionClick.bind(this);
-        this._onTouchStart    = this._onTouchStart.bind(this);
-        this._onTouchEnd      = this._onTouchEnd.bind(this);
-        this._onResize        = this._onResize.bind(this);
+    // ── Bound methods ──
+    this._onKeyDown       = this._onKeyDown.bind(this);
+    this._onBackBtn       = this._onBackBtn.bind(this);
+    this._onRestartBtn    = this._onRestartBtn.bind(this);
+    this._onPauseBtn      = this._onPauseBtn.bind(this);
+    this._onPlayAgainBtn  = this._onPlayAgainBtn.bind(this);
+    this._onChangeModeBtn = this._onChangeModeBtn.bind(this);
+    this._onBackLobbyBtn  = this._onBackLobbyBtn.bind(this);
+    this._onMenuOptionClick = this._onMenuOptionClick.bind(this);
+    this._onTouchStart    = this._onTouchStart.bind(this);
+    this._onTouchEnd      = this._onTouchEnd.bind(this);
+    this._onResize        = this._onResize.bind(this);
+    
+    // Sound helper
+    this._playSound = this._playSound.bind(this);
     }
 
     // ════════════════════════════════════════════
@@ -63,11 +66,11 @@ class SnakeGame extends BaseGame {
         window.addEventListener('resize', this._onResize);
 
         // State events
-        this.state.on('eat', () => this._playSound('eat'));
+        this.state.on('eat', () => this._playSound('move'));
         this.state.on('gameOver', () => {
             this._gameOverTriggered = true;
             this._resultDelay = 0;
-            this._playSound('death');
+            this._playSound('lose');
         });
 
         // Direct mode launch or menu

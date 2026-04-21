@@ -671,45 +671,15 @@ class TicTacToeGame extends BaseGame {
     }
 
     _playWinSound() {
-        if (!this.audio || !this.audio.audioContext) return;
-        const ctx = this.audio.audioContext;
-        const vol = this.audio.volume;
-
-        // Ascending victory fanfare
-        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-        notes.forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
-            osc.type = 'square';
-            gain.gain.setValueAtTime(vol * 0.5, ctx.currentTime + i * 0.12);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
-            osc.start(ctx.currentTime + i * 0.12);
-            osc.stop(ctx.currentTime + i * 0.12 + 0.3);
-        });
+        if (!this.audio) return;
+        // Use central AudioManager
+        this.audio.play('win');
     }
 
     _playDrawSound() {
-        if (!this.audio || !this.audio.audioContext) return;
-        const ctx = this.audio.audioContext;
-        const vol = this.audio.volume;
-
-        // Flat descending tone
-        const notes = [440, 392, 349.23]; // A4, G4, F4
-        notes.forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.15);
-            osc.type = 'triangle';
-            gain.gain.setValueAtTime(vol * 0.4, ctx.currentTime + i * 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.25);
-            osc.start(ctx.currentTime + i * 0.15);
-            osc.stop(ctx.currentTime + i * 0.15 + 0.25);
-        });
+        if (!this.audio) return;
+        // Use central AudioManager
+        this.audio.play('lose'); // Draw uses lose sound
     }
 
     // ════════════════════════════════════════════
